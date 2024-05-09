@@ -15,8 +15,9 @@ pub enum TransactionError {
     FrozenTransaction(Transaction),
     Overflow {
         available: Number,
-        deposit_amount: Number,
-        maximmum: Number,
+        held: Number,
+        transaction_amount: Number,
+        maximum: Number,
     },
 }
 pub type TransactionResult = Result<(), TransactionError>;
@@ -62,8 +63,9 @@ impl TransactionEntry {
             }
             None => Err(TransactionError::Overflow {
                 available: account.available,
-                deposit_amount: self.amount,
-                maximmum: Number::MAX,
+                held: account.held,
+                transaction_amount: self.amount,
+                maximum: Number::MAX,
             }),
         }
     }
@@ -134,10 +136,25 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        account.available -= transaction.amount;
-        account.held += transaction.amount;
-        transaction.disputed = true;
-        Ok(())
+        let new_available = account.available.checked_sub(transaction.amount);
+        let new_held = account.held.checked_add(transaction.amount);
+        match (new_available, new_held) {
+            (Some(available), Some(held)) => {
+                account.available = available;
+                account.held = held;
+                transaction.disputed = true;
+                Ok(())
+            }
+            _ => {
+                account.locked = true;
+                Err(TransactionError::Overflow {
+                    available: account.available,
+                    held: account.held,
+                    transaction_amount: transaction.amount,
+                    maximum: Number::MAX,
+                })
+            }
+        }
     }
 
     fn resolve(
@@ -145,10 +162,25 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        account.available += transaction.amount;
-        account.held -= transaction.amount;
-        transaction.disputed = false;
-        Ok(())
+        let new_available = account.available.checked_add(transaction.amount);
+        let new_held = account.held.checked_sub(transaction.amount);
+        match (new_available, new_held) {
+            (Some(available), Some(held)) => {
+                account.available = available;
+                account.held = held;
+                transaction.disputed = false;
+                Ok(())
+            }
+            _ => {
+                account.locked = true;
+                Err(TransactionError::Overflow {
+                    available: account.available,
+                    held: account.held,
+                    transaction_amount: transaction.amount,
+                    maximum: Number::MAX,
+                })
+            }
+        }
     }
 
     fn chargeback(
