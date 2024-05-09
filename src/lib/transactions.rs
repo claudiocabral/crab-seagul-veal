@@ -3,7 +3,7 @@ use super::account::{Account, ClientId, Number};
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TransactionId(pub u32);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TransactionError {
     Overdraw(Number, Number),
     RepeatedTransactionId(TransactionId),
@@ -35,7 +35,7 @@ pub enum DisputeOperation {
     Resolve,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct TransactionEntry {
     pub client_id: ClientId,
     pub amount: Number,
@@ -78,7 +78,7 @@ impl TransactionEntry {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct DisputeEntry {
     pub client_id: ClientId,
     pub operation: DisputeOperation,
@@ -195,7 +195,7 @@ impl DisputeEntry {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Transaction {
     TransactionEntry(TransactionEntry),
     DisputeEntry(DisputeEntry),
