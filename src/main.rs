@@ -1,9 +1,11 @@
 use clap::Parser;
 use std::{fs, io, sync::mpsc, sync::Arc, sync::Mutex, thread};
 
-use crab::account::*;
+use crab::account::{ClientId, Number};
 use crab::ledger::Ledger;
-use crab::transactions::*;
+use crab::transactions::{
+    DisputeEntry, DisputeOperation, Operation, Transaction, TransactionEntry, TransactionId,
+};
 
 fn create_reader(path: &String) -> csv::Reader<io::BufReader<fs::File>> {
     let file = fs::File::open(path).unwrap();
