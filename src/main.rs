@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::{fs, io, sync::mpsc, sync::Arc, sync::Mutex, thread};
+use std::{fs, io, process::exit, sync::mpsc, thread};
 
 use crab::account::{ClientId, Number};
 use crab::ledger::Ledger;
@@ -131,24 +131,26 @@ fn main() {
     let args = Arguments::parse();
     let debug = args.debug;
     let mut reader = create_reader(&args.filename);
-    let ledger = Arc::new(Mutex::new(Ledger::new()));
-    let ledger_clone = ledger.clone();
-    {
-        let (tx, rx) = mpsc::channel();
-        let handler = thread::spawn(move || {
-            let mut ledger = ledger_clone.lock().unwrap();
-            process_transactions(rx, debug, &mut *ledger);
-        });
-        for result in reader.deserialize::<CsvTransactionRecord>() {
-            let record = result.unwrap();
-            let _ = tx.send(record);
-        }
-        drop(tx);
-        let _ = handler.join();
+    let mut ledger = Ledger::new();
+    let (tx, rx) = mpsc::channel();
+    let handler = thread::spawn(move || {
+        process_transactions(rx, debug, &mut ledger);
+        ledger
+    });
+    for result in reader.deserialize::<CsvTransactionRecord>() {
+        let record = result.unwrap();
+        let _ = tx.send(record);
     }
+    drop(tx);
+    match handler.join() {
+        Ok(l) => ledger = l,
+        Err(err) => {
+            eprintln!("error joining thread: {:?}", err);
+            exit(1);
+        }
+    };
     let mut writer = csv::WriterBuilder::new().from_writer(std::io::stdout());
-    let l = ledger.lock().unwrap();
-    for (key, account) in &l.accounts {
+    for (key, account) in &ledger.accounts {
         let val = CsvAccountRecord {
             client: key.0,
             available: account.available.to_string(),
