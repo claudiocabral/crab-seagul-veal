@@ -149,7 +149,7 @@ fn main() {
             exit(1);
         }
     };
-    let mut writer = csv::WriterBuilder::new().from_writer(std::io::stdout());
+    let mut writer = csv::WriterBuilder::new().from_writer(io::BufWriter::new(io::stdout()));
     for (key, account) in &ledger.accounts {
         let val = CsvAccountRecord {
             client: key.0,
