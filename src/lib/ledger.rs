@@ -53,14 +53,23 @@ impl Ledger {
         if self.transactions.get(&transaction_id).is_some() {
             return Err(TransactionError::RepeatedTransactionId(transaction_id));
         }
-        if (transaction.operation == Operation::Deposit) {
-            self.transactions.insert(transaction_id, *transaction);
-        }
         let mut account = self
             .accounts
             .entry(transaction.client_id)
             .or_insert_with(|| Account::new());
-        transaction.apply(account)
+        match transaction.operation {
+            Operation::Deposit => {
+                self.transactions.insert(transaction_id, *transaction);
+                match account.deposit(transaction.amount) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(TransactionError::AccountError(err)),
+                }
+            }
+            Operation::Withdrawal => match account.withdraw(transaction.amount) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(TransactionError::AccountError(err)),
+            },
+        }
     }
 
     pub fn process_transaction(

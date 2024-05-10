@@ -49,16 +49,6 @@ pub struct TransactionEntry {
 }
 
 impl TransactionEntry {
-    pub fn apply(&self, account: &mut Account) -> TransactionResult {
-        let res = match &self.operation {
-            Operation::Deposit => account.deposit(self.amount),
-            Operation::Withdrawal => account.withdraw(self.amount),
-        };
-        match res {
-            Ok(()) => Ok(()),
-            Err(err) => Err(TransactionError::AccountError(err)),
-        }
-    }
     fn dispute(&mut self, account: &mut Account) -> TransactionResult {
         match account.dispute(self.amount) {
             Ok(_) => {
@@ -106,7 +96,7 @@ impl DisputeEntry {
             DisputeOperation::Chargeback => self.chargeback(account, transaction),
         }
     }
-    fn check_valid_dispute(
+    pub fn check_valid_dispute(
         &self,
         transaction_id: TransactionId,
         transaction: &TransactionEntry,
