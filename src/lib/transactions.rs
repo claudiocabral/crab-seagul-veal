@@ -59,6 +59,31 @@ impl TransactionEntry {
             Err(err) => Err(TransactionError::AccountError(err)),
         }
     }
+    fn dispute(&mut self, account: &mut Account) -> TransactionResult {
+        match account.dispute(self.amount) {
+            Ok(_) => {
+                self.disputed = true;
+                Ok(())
+            }
+            Err(err) => Err(TransactionError::AccountError(err)),
+        }
+    }
+
+    fn resolve(&mut self, account: &mut Account) -> TransactionResult {
+        match account.resolve(self.amount) {
+            Ok(_) => {
+                self.disputed = false;
+                Ok(())
+            }
+            Err(err) => Err(TransactionError::AccountError(err)),
+        }
+    }
+
+    fn chargeback(&mut self, account: &mut Account) -> TransactionResult {
+        account.chargeback(self.amount);
+        self.disputed = false;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -113,13 +138,7 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        match account.dispute(transaction.amount) {
-            Ok(_) => {
-                transaction.disputed = true;
-                Ok(())
-            }
-            Err(err) => Err(TransactionError::AccountError(err)),
-        }
+        transaction.dispute(account)
     }
 
     fn resolve(
@@ -127,13 +146,7 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        match account.resolve(transaction.amount) {
-            Ok(_) => {
-                transaction.disputed = false;
-                Ok(())
-            }
-            Err(err) => Err(TransactionError::AccountError(err)),
-        }
+        transaction.resolve(account)
     }
 
     fn chargeback(
@@ -141,9 +154,7 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        account.chargeback(transaction.amount);
-        transaction.disputed = false;
-        Ok(())
+        transaction.chargeback(account)
     }
 }
 
