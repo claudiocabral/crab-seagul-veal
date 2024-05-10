@@ -138,8 +138,9 @@ fn main() {
         ledger
     });
     for result in reader.deserialize::<CsvTransactionRecord>() {
-        let record = result.unwrap();
-        let _ = tx.send(record);
+        if result.is_ok() {
+            let _ = tx.send(result.unwrap());
+        }
     }
     drop(tx);
     let ledger = match handler.join() {
