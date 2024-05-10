@@ -31,9 +31,6 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn new() -> Self {
-        Default::default()
-    }
     pub fn total(&self) -> Number {
         self.available + self.held
     }

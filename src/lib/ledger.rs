@@ -36,9 +36,7 @@ impl Ledger {
         Ok((maybe_disputed_transaction.unwrap(), maybe_account.unwrap()))
     }
     pub fn get_or_insert_account_mut(&mut self, client_id: ClientId) -> &mut Account {
-        self.accounts
-            .entry(client_id)
-            .or_insert_with(|| Account::new())
+        self.accounts.entry(client_id).or_default()
     }
 
     fn id_exists(&self, transaction_id: TransactionId) -> TransactionResult {
