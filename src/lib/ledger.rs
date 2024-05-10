@@ -15,7 +15,7 @@ pub enum TransactionType {
 }
 
 pub struct Ledger {
-    pub accounts: HashMap<ClientId, Account>,
+    accounts: HashMap<ClientId, Account>,
     transactions: HashMap<TransactionId, TransactionEntry>,
 }
 
@@ -74,6 +74,16 @@ impl Ledger {
             Transaction::TransactionEntry(e) => self.apply_transaction(transaction_id, e),
             Transaction::DisputeEntry(e) => self.apply_dispute(transaction_id, e),
         }
+    }
+}
+
+impl IntoIterator for Ledger {
+    type Item = (ClientId, Account);
+
+    type IntoIter = std::collections::hash_map::IntoIter<ClientId, Account>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.accounts.into_iter()
     }
 }
 
