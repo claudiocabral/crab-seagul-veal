@@ -13,14 +13,6 @@ fn process_transactions<'a>(
     transactions.into_iter().map(move |t| {
         let (id, transaction) = t;
         ledger.apply_transaction(*id, transaction)
-        /*
-        assert!(
-            res.is_ok(),
-            "transaction '{}' result is not ok: {:?}",
-            i,
-            res.unwrap_err()
-        )
-        */
     })
 }
 
