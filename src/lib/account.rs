@@ -41,6 +41,7 @@ impl Account {
         }
     }
     pub fn deposit(&mut self, amount: Number) -> AccountResult {
+        self.check_locked()?;
         match self.available.checked_add(amount) {
             Some(value) => {
                 self.available = value;
@@ -54,6 +55,7 @@ impl Account {
         }
     }
     pub fn withdraw(&mut self, amount: Number) -> AccountResult {
+        self.check_locked()?;
         if self.available < amount {
             return Err(AccountError::Underflow {
                 available: self.available,
@@ -63,6 +65,10 @@ impl Account {
         }
         self.available -= amount;
         Ok(())
+    }
+    pub fn chargeback(&mut self, amount: Number) {
+        self.held -= amount;
+        self.locked = true;
     }
 }
 

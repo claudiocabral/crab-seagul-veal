@@ -74,7 +74,7 @@ impl DisputeEntry {
         transaction_id: TransactionId,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        self.check_valid_dispute(account, transaction_id, transaction)?;
+        self.check_valid_dispute(transaction_id, transaction)?;
         match &self.operation {
             DisputeOperation::Dispute => self.dispute(account, transaction),
             DisputeOperation::Resolve => self.resolve(account, transaction),
@@ -83,7 +83,6 @@ impl DisputeEntry {
     }
     fn check_valid_dispute(
         &self,
-        account: &Account,
         transaction_id: TransactionId,
         transaction: &TransactionEntry,
     ) -> TransactionResult {
@@ -91,11 +90,6 @@ impl DisputeEntry {
             return Err(TransactionError::MismatchedClientId(
                 self.client_id,
                 transaction.client_id,
-            ));
-        }
-        if account.locked {
-            return Err(TransactionError::FrozenTransaction(
-                Transaction::DisputeEntry(*self),
             ));
         }
 
@@ -169,8 +163,7 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        account.held -= transaction.amount;
-        account.locked = true;
+        account.chargeback(transaction.amount);
         transaction.disputed = false;
         Ok(())
     }
