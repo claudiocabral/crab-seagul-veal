@@ -150,7 +150,7 @@ fn main() {
         }
     };
     let mut writer = csv::WriterBuilder::new().from_writer(io::BufWriter::new(io::stdout()));
-    for (key, account) in ledger.into_iter() {
+    for (key, account) in ledger {
         let val = CsvAccountRecord {
             client: key.0,
             available: account.available.to_string(),
