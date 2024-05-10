@@ -1,6 +1,6 @@
 use super::super::{
     account::ClientId, account::Number, ledger::Ledger, transactions::Operation,
-    transactions::Transaction, transactions::TransactionEntry, transactions::TransactionId,
+    transactions::Transaction, transactions::TransactionId,
 };
 use super::TransactionResult;
 
@@ -12,7 +12,7 @@ fn process_transactions<'a>(
 ) -> impl Iterator<Item = TransactionResult> + 'a {
     transactions.into_iter().map(move |t| {
         let (id, transaction) = t;
-        ledger.process_transaction(*id, transaction)
+        ledger.apply_transaction(*id, transaction)
         /*
         assert!(
             res.is_ok(),
@@ -30,30 +30,30 @@ fn test_simple_dispute() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::TransactionEntry(TransactionEntry {
+            Transaction {
                 client_id: ClientId(1),
                 amount: Number::from_num(50.0),
                 operation: Operation::Deposit,
                 disputed: false,
-            }),
+            },
         ),
         (
             TransactionId(2),
-            Transaction::TransactionEntry(TransactionEntry {
+            Transaction {
                 client_id: ClientId(1),
                 amount: Number::from_num(20.0),
                 operation: Operation::Deposit,
                 disputed: false,
-            }),
+            },
         ),
         (
             TransactionId(1),
-            Transaction::TransactionEntry(TransactionEntry {
+            Transaction {
                 client_id: ClientId(1),
                 operation: Operation::Dispute,
                 amount: Number::ZERO,
                 disputed: false,
-            }),
+            },
         ),
     ];
     process_transactions(&mut ledger, &transactions)
@@ -80,30 +80,30 @@ fn test_dispute_after_withdraw() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::TransactionEntry(TransactionEntry {
+            Transaction {
                 client_id: ClientId(1),
                 amount: Number::from_num(1.0),
                 operation: Operation::Deposit,
                 disputed: false,
-            }),
+            },
         ),
         (
             TransactionId(2),
-            Transaction::TransactionEntry(TransactionEntry {
+            Transaction {
                 client_id: ClientId(1),
                 amount: Number::from_num(1.0),
                 operation: Operation::Withdrawal,
                 disputed: false,
-            }),
+            },
         ),
         (
             TransactionId(1),
-            Transaction::TransactionEntry(TransactionEntry {
+            Transaction {
                 client_id: ClientId(1),
                 operation: Operation::Dispute,
                 amount: Number::ZERO,
                 disputed: false,
-            }),
+            },
         ),
     ];
     let res = process_transactions(&mut ledger, &transactions).all(|res| res.is_ok());

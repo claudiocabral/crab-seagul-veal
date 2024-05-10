@@ -12,19 +12,8 @@ pub enum TransactionError {
     MismatchedClientId(ClientId, ClientId),
     AlreadyDisputed(TransactionId),
     UndisputedDispute(Transaction),
-    UndisputedTransaction(TransactionEntry),
-    FrozenTransaction(Transaction),
+    UndisputedTransaction(Transaction),
     AccountError(AccountError),
-    Overflow {
-        available: Number,
-        held: Number,
-        transaction_amount: Number,
-    },
-    Underflow {
-        available: Number,
-        held: Number,
-        transaction_amount: Number,
-    },
 }
 pub type TransactionResult = Result<(), TransactionError>;
 
@@ -38,14 +27,14 @@ pub enum Operation {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct TransactionEntry {
+pub struct Transaction {
     pub client_id: ClientId,
     pub amount: Number,
     pub disputed: bool,
     pub operation: Operation,
 }
 
-impl TransactionEntry {
+impl Transaction {
     pub fn dispute(&mut self, account: &mut Account) -> TransactionResult {
         match account.dispute(self.amount) {
             Ok(_) => {
@@ -75,7 +64,7 @@ impl TransactionEntry {
     pub fn check_valid_dispute(
         &self,
         transaction_id: TransactionId,
-        transaction: &TransactionEntry,
+        transaction: &Transaction,
     ) -> TransactionResult {
         if self.client_id != transaction.client_id {
             return Err(TransactionError::MismatchedClientId(
@@ -96,9 +85,4 @@ impl TransactionEntry {
         }
         Ok(())
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Transaction {
-    TransactionEntry(TransactionEntry),
 }

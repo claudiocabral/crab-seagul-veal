@@ -3,7 +3,7 @@ use std::{fs, io, sync::mpsc, thread};
 
 use crab::account::{ClientId, Number};
 use crab::ledger::Ledger;
-use crab::transactions::{Operation, Transaction, TransactionEntry, TransactionId};
+use crab::transactions::{Operation, Transaction, TransactionId};
 
 fn create_reader(path: &String) -> csv::Reader<io::BufReader<fs::File>> {
     let file = fs::File::open(path).unwrap();
@@ -53,7 +53,7 @@ fn process(
     transaction: &Transaction,
     print_error: bool,
 ) {
-    match ledger.process_transaction(transaction_id, transaction) {
+    match ledger.apply_transaction(transaction_id, transaction) {
         Ok(()) => {}
         Err(err) => {
             if print_error {
@@ -75,56 +75,56 @@ fn process_transactions(
             TransactionType::Deposit => process(
                 ledger,
                 transaction_id,
-                &Transaction::TransactionEntry(TransactionEntry {
+                &Transaction {
                     client_id: ClientId(record.client),
                     amount: Number::from_num(amount),
                     operation: Operation::Deposit,
                     disputed: false,
-                }),
+                },
                 debug,
             ),
             TransactionType::Withdrawal => process(
                 ledger,
                 transaction_id,
-                &Transaction::TransactionEntry(TransactionEntry {
+                &Transaction {
                     client_id: ClientId(record.client),
                     amount: Number::from_num(amount),
                     operation: Operation::Withdrawal,
                     disputed: false,
-                }),
+                },
                 debug,
             ),
             TransactionType::Dispute => process(
                 ledger,
                 transaction_id,
-                &Transaction::TransactionEntry(TransactionEntry {
+                &Transaction {
                     client_id: ClientId(record.client),
                     amount: Number::from_num(amount),
                     operation: Operation::Dispute,
                     disputed: false,
-                }),
+                },
                 debug,
             ),
             TransactionType::Resolve => process(
                 ledger,
                 transaction_id,
-                &Transaction::TransactionEntry(TransactionEntry {
+                &Transaction {
                     client_id: ClientId(record.client),
                     amount: Number::ZERO,
                     operation: Operation::Resolve,
                     disputed: false,
-                }),
+                },
                 debug,
             ),
             TransactionType::Chargeback => process(
                 ledger,
                 transaction_id,
-                &Transaction::TransactionEntry(TransactionEntry {
+                &Transaction {
                     client_id: ClientId(record.client),
                     operation: Operation::Chargeback,
                     amount: Number::from_num(amount),
                     disputed: false,
-                }),
+                },
                 debug,
             ),
         }

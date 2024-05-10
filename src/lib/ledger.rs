@@ -2,15 +2,14 @@
 
 use super::{
     account::Account, account::ClientId, transactions::Operation, transactions::Transaction,
-    transactions::TransactionEntry, transactions::TransactionError, transactions::TransactionId,
-    transactions::TransactionResult,
+    transactions::TransactionError, transactions::TransactionId, transactions::TransactionResult,
 };
 
 use std::collections::HashMap;
 
 pub struct Ledger {
     accounts: HashMap<ClientId, Account>,
-    transactions: HashMap<TransactionId, TransactionEntry>,
+    transactions: HashMap<TransactionId, Transaction>,
 }
 
 impl Ledger {
@@ -25,7 +24,7 @@ impl Ledger {
         &mut self,
         transaction_id: TransactionId,
         client_id: ClientId,
-    ) -> Result<(&mut TransactionEntry, &mut Account), TransactionError> {
+    ) -> Result<(&mut Transaction, &mut Account), TransactionError> {
         let maybe_disputed_transaction = self.transactions.get_mut(&transaction_id);
         if maybe_disputed_transaction.is_none() {
             return Err(TransactionError::UnknownTransactionId(transaction_id));
@@ -51,7 +50,7 @@ impl Ledger {
     pub fn apply_transaction(
         &mut self,
         transaction_id: TransactionId,
-        transaction: &TransactionEntry,
+        transaction: &Transaction,
     ) -> TransactionResult {
         match transaction.operation {
             Operation::Deposit => {
@@ -90,16 +89,6 @@ impl Ledger {
                 transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
                 disputed_transaction.chargeback(account)
             }
-        }
-    }
-
-    pub fn process_transaction(
-        &mut self,
-        transaction_id: TransactionId,
-        entry: &Transaction,
-    ) -> Result<(), TransactionError> {
-        match (entry) {
-            Transaction::TransactionEntry(e) => self.apply_transaction(transaction_id, e),
         }
     }
 }
