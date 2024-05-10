@@ -99,9 +99,11 @@ fn process_transactions(
             TransactionType::Dispute => process(
                 ledger,
                 transaction_id,
-                &Transaction::DisputeEntry(DisputeEntry {
+                &Transaction::TransactionEntry(TransactionEntry {
                     client_id: ClientId(record.client),
-                    operation: DisputeOperation::Dispute,
+                    amount: Number::from_num(amount),
+                    operation: Operation::Dispute,
+                    disputed: false,
                 }),
                 debug,
             ),

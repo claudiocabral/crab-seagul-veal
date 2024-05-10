@@ -12,6 +12,7 @@ pub enum TransactionError {
     MismatchedClientId(ClientId, ClientId),
     AlreadyDisputed(TransactionId),
     UndisputedDispute(Transaction),
+    UndisputedTransaction(TransactionEntry),
     FrozenTransaction(Transaction),
     AccountError(AccountError),
     Overflow {
@@ -31,12 +32,12 @@ pub type TransactionResult = Result<(), TransactionError>;
 pub enum Operation {
     Deposit,
     Withdrawal,
+    Dispute,
     Chargeback,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum DisputeOperation {
-    Dispute,
     Resolve,
 }
 
@@ -49,7 +50,7 @@ pub struct TransactionEntry {
 }
 
 impl TransactionEntry {
-    fn dispute(&mut self, account: &mut Account) -> TransactionResult {
+    pub fn dispute(&mut self, account: &mut Account) -> TransactionResult {
         match account.dispute(self.amount) {
             Ok(_) => {
                 self.disputed = true;
@@ -74,6 +75,31 @@ impl TransactionEntry {
         self.disputed = false;
         Ok(())
     }
+
+    pub fn check_valid_dispute(
+        &self,
+        transaction_id: TransactionId,
+        transaction: &TransactionEntry,
+    ) -> TransactionResult {
+        if self.client_id != transaction.client_id {
+            return Err(TransactionError::MismatchedClientId(
+                self.client_id,
+                transaction.client_id,
+            ));
+        }
+
+        // this could be condensed in a single clever if block, but I think this is more readable
+        if self.operation == Operation::Dispute {
+            if transaction.disputed {
+                return Err(TransactionError::AlreadyDisputed(transaction_id));
+            }
+        } else {
+            if !transaction.disputed {
+                return Err(TransactionError::UndisputedTransaction(*self));
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -91,13 +117,12 @@ impl DisputeEntry {
     ) -> TransactionResult {
         self.check_valid_dispute(transaction_id, transaction)?;
         match &self.operation {
-            DisputeOperation::Dispute => self.dispute(account, transaction),
             DisputeOperation::Resolve => self.resolve(account, transaction),
         }
     }
     pub fn check_valid_dispute(
         &self,
-        transaction_id: TransactionId,
+        _transaction_id: TransactionId,
         transaction: &TransactionEntry,
     ) -> TransactionResult {
         if self.client_id != transaction.client_id {
@@ -107,27 +132,12 @@ impl DisputeEntry {
             ));
         }
 
-        // this could be condensed in a single clever if block, but I think this is more readable
-        if self.operation == DisputeOperation::Dispute {
-            if transaction.disputed {
-                return Err(TransactionError::AlreadyDisputed(transaction_id));
-            }
-        } else {
-            if !transaction.disputed {
-                return Err(TransactionError::UndisputedDispute(
-                    Transaction::DisputeEntry(*self),
-                ));
-            }
+        if !transaction.disputed {
+            return Err(TransactionError::UndisputedDispute(
+                Transaction::DisputeEntry(*self),
+            ));
         }
         Ok(())
-    }
-
-    fn dispute(
-        &self,
-        account: &mut Account,
-        transaction: &mut TransactionEntry,
-    ) -> TransactionResult {
-        transaction.dispute(account)
     }
 
     fn resolve(

@@ -36,6 +36,11 @@ impl Ledger {
         }
         Ok((maybe_disputed_transaction.unwrap(), maybe_account.unwrap()))
     }
+    pub fn get_or_insert_account_mut(&mut self, client_id: ClientId) -> &mut Account {
+        self.accounts
+            .entry(client_id)
+            .or_insert_with(|| Account::new())
+    }
 
     pub fn apply_dispute(
         &mut self,
@@ -47,33 +52,46 @@ impl Ledger {
         dispute.apply(account, transaction_id, disputed_transaction)
     }
 
+    fn id_exists(&self, transaction_id: TransactionId) -> TransactionResult {
+        match self.transactions.contains_key(&transaction_id) {
+            true => Err(TransactionError::RepeatedTransactionId(transaction_id)),
+            false => Ok(()),
+        }
+    }
     pub fn apply_transaction(
         &mut self,
         transaction_id: TransactionId,
         transaction: &TransactionEntry,
     ) -> TransactionResult {
-        if self.transactions.get(&transaction_id).is_some() {
-            return Err(TransactionError::RepeatedTransactionId(transaction_id));
-        }
-        let mut account = self
-            .accounts
-            .entry(transaction.client_id)
-            .or_insert_with(|| Account::new());
         match transaction.operation {
             Operation::Deposit => {
+                self.id_exists(transaction_id)?;
                 self.transactions.insert(transaction_id, *transaction);
+                let mut account = self.get_or_insert_account_mut(transaction.client_id);
                 match account.deposit(transaction.amount) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(TransactionError::AccountError(err)),
                 }
             }
-            Operation::Withdrawal => match account.withdraw(transaction.amount) {
-                Ok(_) => Ok(()),
-                Err(err) => Err(TransactionError::AccountError(err)),
-            },
+            Operation::Withdrawal => {
+                self.id_exists(transaction_id)?;
+                self.transactions.insert(transaction_id, *transaction);
+                let mut account = self.get_or_insert_account_mut(transaction.client_id);
+                match account.withdraw(transaction.amount) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(TransactionError::AccountError(err)),
+                }
+            }
+            Operation::Dispute => {
+                let (disputed_transaction, account) =
+                    self.get_transaction_and_account_mut(transaction_id, transaction.client_id)?;
+                transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
+                disputed_transaction.dispute(account)
+            }
             Operation::Chargeback => {
                 let (disputed_transaction, account) =
                     self.get_transaction_and_account_mut(transaction_id, transaction.client_id)?;
+                transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
                 disputed_transaction.chargeback(account)
             }
         }

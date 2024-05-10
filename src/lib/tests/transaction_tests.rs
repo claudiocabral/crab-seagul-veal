@@ -49,9 +49,11 @@ fn test_simple_dispute() {
         ),
         (
             TransactionId(1),
-            Transaction::DisputeEntry(DisputeEntry {
+            Transaction::TransactionEntry(TransactionEntry {
                 client_id: ClientId(1),
-                operation: DisputeOperation::Dispute,
+                operation: Operation::Dispute,
+                amount: Number::ZERO,
+                disputed: false,
             }),
         ),
     ];
@@ -97,9 +99,11 @@ fn test_dispute_after_withdraw() {
         ),
         (
             TransactionId(1),
-            Transaction::DisputeEntry(DisputeEntry {
+            Transaction::TransactionEntry(TransactionEntry {
                 client_id: ClientId(1),
-                operation: DisputeOperation::Dispute,
+                operation: Operation::Dispute,
+                amount: Number::ZERO,
+                disputed: false,
             }),
         ),
     ];
