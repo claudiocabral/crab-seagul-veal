@@ -117,9 +117,11 @@ fn process_transactions(
             TransactionType::Chargeback => process(
                 ledger,
                 transaction_id,
-                &Transaction::DisputeEntry(DisputeEntry {
+                &Transaction::TransactionEntry(TransactionEntry {
                     client_id: ClientId(record.client),
-                    operation: DisputeOperation::Chargeback,
+                    operation: Operation::Chargeback,
+                    amount: Number::from_num(amount),
+                    disputed: false,
                 }),
                 debug,
             ),

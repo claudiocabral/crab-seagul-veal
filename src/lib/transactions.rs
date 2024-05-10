@@ -31,12 +31,12 @@ pub type TransactionResult = Result<(), TransactionError>;
 pub enum Operation {
     Deposit,
     Withdrawal,
+    Chargeback,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum DisputeOperation {
     Dispute,
-    Chargeback,
     Resolve,
 }
 
@@ -69,7 +69,7 @@ impl TransactionEntry {
         }
     }
 
-    fn chargeback(&mut self, account: &mut Account) -> TransactionResult {
+    pub fn chargeback(&mut self, account: &mut Account) -> TransactionResult {
         account.chargeback(self.amount);
         self.disputed = false;
         Ok(())
@@ -93,7 +93,6 @@ impl DisputeEntry {
         match &self.operation {
             DisputeOperation::Dispute => self.dispute(account, transaction),
             DisputeOperation::Resolve => self.resolve(account, transaction),
-            DisputeOperation::Chargeback => self.chargeback(account, transaction),
         }
     }
     pub fn check_valid_dispute(
@@ -137,14 +136,6 @@ impl DisputeEntry {
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
         transaction.resolve(account)
-    }
-
-    fn chargeback(
-        &self,
-        account: &mut Account,
-        transaction: &mut TransactionEntry,
-    ) -> TransactionResult {
-        transaction.chargeback(account)
     }
 }
 

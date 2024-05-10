@@ -27,21 +27,29 @@ impl Ledger {
         }
     }
 
+    pub fn get_transaction_and_account_mut(
+        &mut self,
+        transaction_id: TransactionId,
+        client_id: ClientId,
+    ) -> Result<(&mut TransactionEntry, &mut Account), TransactionError> {
+        let maybe_disputed_transaction = self.transactions.get_mut(&transaction_id);
+        if maybe_disputed_transaction.is_none() {
+            return Err(TransactionError::UnknownTransactionId(transaction_id));
+        }
+        let maybe_account = self.accounts.get_mut(&client_id);
+        if maybe_account.is_none() {
+            return Err(TransactionError::UnknownClientId(client_id));
+        }
+        Ok((maybe_disputed_transaction.unwrap(), maybe_account.unwrap()))
+    }
+
     pub fn apply_dispute(
         &mut self,
         transaction_id: TransactionId,
         dispute: &DisputeEntry,
     ) -> TransactionResult {
-        let maybe_disputed_transaction = self.transactions.get_mut(&transaction_id);
-        if maybe_disputed_transaction.is_none() {
-            return Err(TransactionError::UnknownTransactionId(transaction_id));
-        }
-        let mut disputed_transaction = maybe_disputed_transaction.unwrap();
-        let maybe_account = self.accounts.get_mut(&dispute.client_id);
-        if maybe_account.is_none() {
-            return Err(TransactionError::UnknownClientId(dispute.client_id));
-        }
-        let account = maybe_account.unwrap();
+        let (disputed_transaction, account) =
+            self.get_transaction_and_account_mut(transaction_id, dispute.client_id)?;
         dispute.apply(account, transaction_id, disputed_transaction)
     }
 
@@ -69,6 +77,11 @@ impl Ledger {
                 Ok(_) => Ok(()),
                 Err(err) => Err(TransactionError::AccountError(err)),
             },
+            Operation::Chargeback => {
+                let (disputed_transaction, account) =
+                    self.get_transaction_and_account_mut(transaction_id, transaction.client_id)?;
+                disputed_transaction.chargeback(account)
+            }
         }
     }
 
