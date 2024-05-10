@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::{fs, io, process::exit, sync::mpsc, thread};
+use std::{fs, io, sync::mpsc, thread};
 
 use crab::account::{ClientId, Number};
 use crab::ledger::Ledger;
@@ -127,7 +127,7 @@ fn process_transactions(
     }
 }
 
-fn main() {
+fn main() -> std::thread::Result<()> {
     let args = Arguments::parse();
     let debug = args.debug;
     let mut reader = create_reader(&args.filename);
@@ -143,13 +143,7 @@ fn main() {
         }
     }
     drop(tx);
-    let ledger = match handler.join() {
-        Ok(l) => l,
-        Err(err) => {
-            eprintln!("error joining thread: {:?}", err);
-            exit(1);
-        }
-    };
+    let ledger = handler.join()?;
     let mut writer = csv::WriterBuilder::new().from_writer(io::BufWriter::new(io::stdout()));
     for (key, account) in ledger {
         let val = CsvAccountRecord {
@@ -161,4 +155,5 @@ fn main() {
         };
         let _ = writer.serialize(val);
     }
+    Ok(())
 }
