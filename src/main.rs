@@ -131,9 +131,9 @@ fn main() {
     let args = Arguments::parse();
     let debug = args.debug;
     let mut reader = create_reader(&args.filename);
-    let mut ledger = Ledger::new();
     let (tx, rx) = mpsc::channel();
     let handler = thread::spawn(move || {
+        let mut ledger = Ledger::new();
         process_transactions(rx, debug, &mut ledger);
         ledger
     });
@@ -142,8 +142,8 @@ fn main() {
         let _ = tx.send(record);
     }
     drop(tx);
-    match handler.join() {
-        Ok(l) => ledger = l,
+    let ledger = match handler.join() {
+        Ok(l) => l,
         Err(err) => {
             eprintln!("error joining thread: {:?}", err);
             exit(1);
