@@ -70,64 +70,27 @@ fn process_transactions(
 ) {
     while let Ok(record) = rx_channel.recv() {
         let transaction_id = TransactionId(record.tx);
-        let amount = record.amount.unwrap_or(0.0);
-        match record.tx_type {
-            TransactionType::Deposit => process(
-                ledger,
-                transaction_id,
-                &Transaction {
-                    client_id: ClientId(record.client),
-                    amount: Number::from_num(amount),
-                    operation: Operation::Deposit,
-                    disputed: false,
-                },
-                debug,
-            ),
-            TransactionType::Withdrawal => process(
-                ledger,
-                transaction_id,
-                &Transaction {
-                    client_id: ClientId(record.client),
-                    amount: Number::from_num(amount),
-                    operation: Operation::Withdrawal,
-                    disputed: false,
-                },
-                debug,
-            ),
-            TransactionType::Dispute => process(
-                ledger,
-                transaction_id,
-                &Transaction {
-                    client_id: ClientId(record.client),
-                    amount: Number::from_num(amount),
-                    operation: Operation::Dispute,
-                    disputed: false,
-                },
-                debug,
-            ),
-            TransactionType::Resolve => process(
-                ledger,
-                transaction_id,
-                &Transaction {
-                    client_id: ClientId(record.client),
-                    amount: Number::ZERO,
-                    operation: Operation::Resolve,
-                    disputed: false,
-                },
-                debug,
-            ),
-            TransactionType::Chargeback => process(
-                ledger,
-                transaction_id,
-                &Transaction {
-                    client_id: ClientId(record.client),
-                    operation: Operation::Chargeback,
-                    amount: Number::from_num(amount),
-                    disputed: false,
-                },
-                debug,
-            ),
-        }
+        let amount = Number::from_num(record.amount.unwrap_or(0.0));
+        let disputed = false;
+        let client_id = ClientId(record.client);
+        let operation = match record.tx_type {
+            TransactionType::Deposit => Operation::Deposit,
+            TransactionType::Withdrawal => Operation::Withdrawal,
+            TransactionType::Dispute => Operation::Dispute,
+            TransactionType::Resolve => Operation::Resolve,
+            TransactionType::Chargeback => Operation::Chargeback,
+        };
+        process(
+            ledger,
+            transaction_id,
+            &Transaction {
+                client_id,
+                operation,
+                amount,
+                disputed,
+            },
+            debug,
+        )
     }
 }
 
