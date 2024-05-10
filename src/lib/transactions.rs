@@ -34,10 +34,6 @@ pub enum Operation {
     Withdrawal,
     Dispute,
     Chargeback,
-}
-
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub enum DisputeOperation {
     Resolve,
 }
 
@@ -60,7 +56,7 @@ impl TransactionEntry {
         }
     }
 
-    fn resolve(&mut self, account: &mut Account) -> TransactionResult {
+    pub fn resolve(&mut self, account: &mut Account) -> TransactionResult {
         match account.resolve(self.amount) {
             Ok(_) => {
                 self.disputed = false;
@@ -102,55 +98,7 @@ impl TransactionEntry {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct DisputeEntry {
-    pub client_id: ClientId,
-    pub operation: DisputeOperation,
-}
-
-impl DisputeEntry {
-    pub fn apply(
-        &self,
-        account: &mut Account,
-        transaction_id: TransactionId,
-        transaction: &mut TransactionEntry,
-    ) -> TransactionResult {
-        self.check_valid_dispute(transaction_id, transaction)?;
-        match &self.operation {
-            DisputeOperation::Resolve => self.resolve(account, transaction),
-        }
-    }
-    pub fn check_valid_dispute(
-        &self,
-        _transaction_id: TransactionId,
-        transaction: &TransactionEntry,
-    ) -> TransactionResult {
-        if self.client_id != transaction.client_id {
-            return Err(TransactionError::MismatchedClientId(
-                self.client_id,
-                transaction.client_id,
-            ));
-        }
-
-        if !transaction.disputed {
-            return Err(TransactionError::UndisputedDispute(
-                Transaction::DisputeEntry(*self),
-            ));
-        }
-        Ok(())
-    }
-
-    fn resolve(
-        &self,
-        account: &mut Account,
-        transaction: &mut TransactionEntry,
-    ) -> TransactionResult {
-        transaction.resolve(account)
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub enum Transaction {
     TransactionEntry(TransactionEntry),
-    DisputeEntry(DisputeEntry),
 }

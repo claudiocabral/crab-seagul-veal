@@ -1,7 +1,6 @@
 use super::super::{
-    account::ClientId, account::Number, ledger::Ledger, transactions::DisputeEntry,
-    transactions::DisputeOperation, transactions::Operation, transactions::Transaction,
-    transactions::TransactionEntry, transactions::TransactionId,
+    account::ClientId, account::Number, ledger::Ledger, transactions::Operation,
+    transactions::Transaction, transactions::TransactionEntry, transactions::TransactionId,
 };
 use super::TransactionResult;
 

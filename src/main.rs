@@ -3,9 +3,7 @@ use std::{fs, io, sync::mpsc, thread};
 
 use crab::account::{ClientId, Number};
 use crab::ledger::Ledger;
-use crab::transactions::{
-    DisputeEntry, DisputeOperation, Operation, Transaction, TransactionEntry, TransactionId,
-};
+use crab::transactions::{Operation, Transaction, TransactionEntry, TransactionId};
 
 fn create_reader(path: &String) -> csv::Reader<io::BufReader<fs::File>> {
     let file = fs::File::open(path).unwrap();
@@ -110,9 +108,11 @@ fn process_transactions(
             TransactionType::Resolve => process(
                 ledger,
                 transaction_id,
-                &Transaction::DisputeEntry(DisputeEntry {
+                &Transaction::TransactionEntry(TransactionEntry {
                     client_id: ClientId(record.client),
-                    operation: DisputeOperation::Resolve,
+                    amount: Number::ZERO,
+                    operation: Operation::Resolve,
+                    disputed: false,
                 }),
                 debug,
             ),

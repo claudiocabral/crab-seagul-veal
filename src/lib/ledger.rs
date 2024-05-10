@@ -1,9 +1,9 @@
 #![allow(warnings)]
 
 use super::{
-    account::Account, account::ClientId, transactions::DisputeEntry, transactions::Operation,
-    transactions::Transaction, transactions::TransactionEntry, transactions::TransactionError,
-    transactions::TransactionId, transactions::TransactionResult,
+    account::Account, account::ClientId, transactions::Operation, transactions::Transaction,
+    transactions::TransactionEntry, transactions::TransactionError, transactions::TransactionId,
+    transactions::TransactionResult,
 };
 
 use std::collections::HashMap;
@@ -42,16 +42,6 @@ impl Ledger {
             .or_insert_with(|| Account::new())
     }
 
-    pub fn apply_dispute(
-        &mut self,
-        transaction_id: TransactionId,
-        dispute: &DisputeEntry,
-    ) -> TransactionResult {
-        let (disputed_transaction, account) =
-            self.get_transaction_and_account_mut(transaction_id, dispute.client_id)?;
-        dispute.apply(account, transaction_id, disputed_transaction)
-    }
-
     fn id_exists(&self, transaction_id: TransactionId) -> TransactionResult {
         match self.transactions.contains_key(&transaction_id) {
             true => Err(TransactionError::RepeatedTransactionId(transaction_id)),
@@ -88,6 +78,12 @@ impl Ledger {
                 transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
                 disputed_transaction.dispute(account)
             }
+            Operation::Resolve => {
+                let (disputed_transaction, account) =
+                    self.get_transaction_and_account_mut(transaction_id, transaction.client_id)?;
+                transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
+                disputed_transaction.resolve(account)
+            }
             Operation::Chargeback => {
                 let (disputed_transaction, account) =
                     self.get_transaction_and_account_mut(transaction_id, transaction.client_id)?;
@@ -104,7 +100,6 @@ impl Ledger {
     ) -> Result<(), TransactionError> {
         match (entry) {
             Transaction::TransactionEntry(e) => self.apply_transaction(transaction_id, e),
-            Transaction::DisputeEntry(e) => self.apply_dispute(transaction_id, e),
         }
     }
 }
