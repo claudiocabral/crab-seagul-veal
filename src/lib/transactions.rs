@@ -1,9 +1,10 @@
 use super::account::{Account, ClientId, Number};
+use crate::account::AccountError;
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TransactionId(pub u32);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum TransactionError {
     RepeatedTransactionId(TransactionId),
     UnknownTransactionId(TransactionId),
@@ -12,6 +13,7 @@ pub enum TransactionError {
     AlreadyDisputed(TransactionId),
     UndisputedDispute(Transaction),
     FrozenTransaction(Transaction),
+    AccountError(AccountError),
     Overflow {
         available: Number,
         held: Number,
@@ -48,14 +50,13 @@ pub struct TransactionEntry {
 
 impl TransactionEntry {
     pub fn apply(&self, account: &mut Account) -> TransactionResult {
-        if account.locked {
-            return Err(TransactionError::FrozenTransaction(
-                Transaction::TransactionEntry(*self),
-            ));
-        }
-        match &self.operation {
+        let res = match &self.operation {
             Operation::Deposit => account.deposit(self.amount),
             Operation::Withdrawal => account.withdraw(self.amount),
+        };
+        match res {
+            Ok(()) => Ok(()),
+            Err(err) => Err(TransactionError::AccountError(err)),
         }
     }
 }

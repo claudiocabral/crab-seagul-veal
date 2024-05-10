@@ -1,5 +1,3 @@
-use super::transactions::TransactionError;
-use super::transactions::TransactionResult;
 use fixed::types::extra::*;
 use fixed::FixedU64;
 
@@ -8,7 +6,24 @@ pub type Number = FixedU64<U14>;
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Default)]
 pub struct ClientId(pub u16);
 
-#[derive(Copy, Clone, Default)]
+#[derive(Debug)]
+pub enum AccountError {
+    Overflow {
+        available: Number,
+        held: Number,
+        transaction_amount: Number,
+    },
+    Underflow {
+        available: Number,
+        held: Number,
+        transaction_amount: Number,
+    },
+    FrozenAccount(Account),
+}
+
+pub type AccountResult = Result<(), AccountError>;
+
+#[derive(Copy, Clone, Default, Debug)]
 pub struct Account {
     pub available: Number,
     pub held: Number,
@@ -19,22 +34,28 @@ impl Account {
     pub fn total(&self) -> Number {
         self.available + self.held
     }
-    pub fn deposit(&mut self, amount: Number) -> TransactionResult {
+    pub fn check_locked(&mut self) -> AccountResult {
+        match self.locked {
+            true => Err(AccountError::FrozenAccount(*self)),
+            false => Ok(()),
+        }
+    }
+    pub fn deposit(&mut self, amount: Number) -> AccountResult {
         match self.available.checked_add(amount) {
             Some(value) => {
                 self.available = value;
                 Ok(())
             }
-            None => Err(TransactionError::Overflow {
+            None => Err(AccountError::Overflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
             }),
         }
     }
-    pub fn withdraw(&mut self, amount: Number) -> TransactionResult {
+    pub fn withdraw(&mut self, amount: Number) -> AccountResult {
         if self.available < amount {
-            return Err(TransactionError::Underflow {
+            return Err(AccountError::Underflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
