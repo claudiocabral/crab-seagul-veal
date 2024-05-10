@@ -71,7 +71,6 @@ fn process_transactions(
     while let Ok(record) = rx_channel.recv() {
         let transaction_id = TransactionId(record.tx);
         let amount = Number::from_num(record.amount.unwrap_or(0.0));
-        let disputed = false;
         let client_id = ClientId(record.client);
         let operation = match record.tx_type {
             TransactionType::Deposit => Operation::Deposit,
@@ -83,12 +82,7 @@ fn process_transactions(
         process(
             ledger,
             transaction_id,
-            &Transaction {
-                client_id,
-                operation,
-                amount,
-                disputed,
-            },
+            &Transaction::new(client_id, amount, operation),
             debug,
         )
     }

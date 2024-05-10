@@ -30,30 +30,15 @@ fn test_simple_dispute() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction {
-                client_id: ClientId(1),
-                amount: Number::from_num(50.0),
-                operation: Operation::Deposit,
-                disputed: false,
-            },
+            Transaction::new(ClientId(1), Number::from_num(50.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction {
-                client_id: ClientId(1),
-                amount: Number::from_num(20.0),
-                operation: Operation::Deposit,
-                disputed: false,
-            },
+            Transaction::new(ClientId(1), Number::from_num(20.0), Operation::Deposit),
         ),
         (
             TransactionId(1),
-            Transaction {
-                client_id: ClientId(1),
-                operation: Operation::Dispute,
-                amount: Number::ZERO,
-                disputed: false,
-            },
+            Transaction::new(ClientId(1), Number::ZERO, Operation::Dispute),
         ),
     ];
     process_transactions(&mut ledger, &transactions)
@@ -71,7 +56,7 @@ fn test_simple_dispute() {
     assert_eq!(ledger.transactions.len(), 2);
     let locked_transaction = ledger.transactions.get(&TransactionId(1));
     assert!(locked_transaction.is_some());
-    assert!(locked_transaction.unwrap().disputed);
+    assert!(locked_transaction.unwrap().disputed());
 }
 
 #[test]
@@ -80,30 +65,15 @@ fn test_dispute_after_withdraw() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction {
-                client_id: ClientId(1),
-                amount: Number::from_num(1.0),
-                operation: Operation::Deposit,
-                disputed: false,
-            },
+            Transaction::new(ClientId(1), Number::from_num(1.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction {
-                client_id: ClientId(1),
-                amount: Number::from_num(1.0),
-                operation: Operation::Withdrawal,
-                disputed: false,
-            },
+            Transaction::new(ClientId(1), Number::from_num(1.0), Operation::Withdrawal),
         ),
         (
             TransactionId(1),
-            Transaction {
-                client_id: ClientId(1),
-                operation: Operation::Dispute,
-                amount: Number::ZERO,
-                disputed: false,
-            },
+            Transaction::new(ClientId(1), Number::ZERO, Operation::Dispute),
         ),
     ];
     let res = process_transactions(&mut ledger, &transactions).all(|res| res.is_ok());

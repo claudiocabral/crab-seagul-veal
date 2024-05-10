@@ -28,13 +28,33 @@ pub enum Operation {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Transaction {
-    pub client_id: ClientId,
-    pub amount: Number,
-    pub disputed: bool,
-    pub operation: Operation,
+    client_id: ClientId,
+    amount: Number,
+    disputed: bool,
+    operation: Operation,
 }
 
 impl Transaction {
+    pub fn new(client_id: ClientId, amount: Number, operation: Operation) -> Self {
+        Self {
+            amount,
+            client_id,
+            operation,
+            disputed: false,
+        }
+    }
+    pub fn operation(&self) -> Operation {
+        self.operation
+    }
+    pub fn amount(&self) -> Number {
+        self.amount
+    }
+    pub fn client_id(&self) -> ClientId {
+        self.client_id
+    }
+    pub fn disputed(&self) -> bool {
+        self.disputed
+    }
     pub fn dispute(&mut self, account: &mut Account) -> TransactionResult {
         match account.dispute(self.amount) {
             Ok(_) => {
