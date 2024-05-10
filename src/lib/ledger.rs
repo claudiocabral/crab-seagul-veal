@@ -59,9 +59,7 @@ impl Ledger {
         let mut account = self
             .accounts
             .entry(transaction.client_id)
-            .or_insert_with(|| Account {
-                ..Default::default()
-            });
+            .or_insert_with(|| Account::new());
         transaction.apply(account)
     }
 

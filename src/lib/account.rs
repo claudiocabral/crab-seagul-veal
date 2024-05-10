@@ -25,14 +25,26 @@ pub type AccountResult = Result<(), AccountError>;
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Account {
-    pub available: Number,
-    pub held: Number,
-    pub locked: bool,
+    available: Number,
+    held: Number,
+    locked: bool,
 }
 
 impl Account {
+    pub fn new() -> Self {
+        Default::default()
+    }
     pub fn total(&self) -> Number {
         self.available + self.held
+    }
+    pub fn available(&self) -> Number {
+        self.available
+    }
+    pub fn held(&self) -> Number {
+        self.held
+    }
+    pub fn locked(&self) -> bool {
+        self.locked
     }
     pub fn check_locked(&mut self) -> AccountResult {
         match self.locked {

@@ -65,8 +65,8 @@ fn test_simple_dispute() {
                 res.unwrap_err()
             )
         });
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available, 20.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held, 50.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 20.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 50.0);
     assert_eq!(ledger.transactions.len(), 2);
     let locked_transaction = ledger.transactions.get(&TransactionId(1));
     assert!(locked_transaction.is_some());
@@ -105,7 +105,7 @@ fn test_dispute_after_withdraw() {
     ];
     let res = process_transactions(&mut ledger, &transactions).all(|res| res.is_ok());
     assert_eq!(res, false);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available, 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held, 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked, true);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 0.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), true);
 }
