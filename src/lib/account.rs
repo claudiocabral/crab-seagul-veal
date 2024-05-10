@@ -6,7 +6,7 @@ pub type Number = FixedU64<U14>;
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Default)]
 pub struct ClientId(pub u16);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AccountError {
     Overflow {
         available: Number,
@@ -23,7 +23,7 @@ pub enum AccountError {
 
 pub type AccountResult = Result<(), AccountError>;
 
-#[derive(Copy, Clone, Default, Debug)]
+#[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct Account {
     available: Number,
     held: Number,
@@ -152,6 +152,6 @@ mod account_tests {
          * accounts even in extremely inflated currencies
          */
         assert!(Number::DELTA <= 0.0001);
-        assert_eq!(Number::MAX.floor(), 1_125_899_906_842_623.0);
+        assert_eq!(Number::MAX.floor(), 1_125_899_906_842_623 as u64);
     }
 }

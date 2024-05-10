@@ -4,7 +4,7 @@ use crate::account::AccountError;
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TransactionId(pub u32);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TransactionError {
     RepeatedTransactionId(TransactionId),
     UnknownTransactionId(TransactionId),

@@ -1,6 +1,6 @@
 use super::super::{
     account::ClientId, account::Number, ledger::Ledger, transactions::Operation,
-    transactions::Transaction, transactions::TransactionId,
+    transactions::Transaction, transactions::TransactionError, transactions::TransactionId,
 };
 use super::TransactionResult;
 
@@ -210,4 +210,47 @@ fn test_dispute_after_withdraw() {
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 0.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), true);
+}
+
+#[test]
+fn test_cant_withdrawal_with_same_id() {
+    let mut ledger = Ledger::new();
+    let _ = ledger.apply_transaction(
+        TransactionId(0),
+        &Transaction::new(ClientId(1), Number::ONE, Operation::Deposit),
+    );
+    let _ = ledger.apply_transaction(
+        TransactionId(1),
+        &Transaction::new(ClientId(1), Number::from_num(0.5), Operation::Withdrawal),
+    );
+    let res = ledger.apply_transaction(
+        TransactionId(1),
+        &Transaction::new(ClientId(1), Number::from_num(0.5), Operation::Withdrawal),
+    );
+    assert_eq!(
+        res.err().unwrap(),
+        TransactionError::RepeatedTransactionId(TransactionId(1))
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 0.5,);
+}
+
+#[test]
+fn test_cant_deposit_with_same_id() {
+    let mut ledger = Ledger::new();
+    let _ = ledger.apply_transaction(
+        TransactionId(0),
+        &Transaction::new(ClientId(1), Number::ONE, Operation::Deposit),
+    );
+    let res = ledger.apply_transaction(
+        TransactionId(0),
+        &Transaction::new(ClientId(1), Number::from_num(0.5), Operation::Deposit),
+    );
+    assert_eq!(
+        res.err().unwrap(),
+        TransactionError::RepeatedTransactionId(TransactionId(0))
+    );
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        Number::ONE
+    );
 }
