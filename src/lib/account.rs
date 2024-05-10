@@ -1,3 +1,5 @@
+use super::transactions::TransactionError;
+use super::transactions::TransactionResult;
 use fixed::types::extra::*;
 use fixed::FixedU64;
 
@@ -16,6 +18,30 @@ pub struct Account {
 impl Account {
     pub fn total(&self) -> Number {
         self.available + self.held
+    }
+    pub fn deposit(&mut self, amount: Number) -> TransactionResult {
+        match self.available.checked_add(amount) {
+            Some(value) => {
+                self.available = value;
+                Ok(())
+            }
+            None => Err(TransactionError::Overflow {
+                available: self.available,
+                held: self.held,
+                transaction_amount: amount,
+            }),
+        }
+    }
+    pub fn withdraw(&mut self, amount: Number) -> TransactionResult {
+        if self.available < amount {
+            return Err(TransactionError::Underflow {
+                available: self.available,
+                held: self.held,
+                transaction_amount: amount,
+            });
+        }
+        self.available -= amount;
+        Ok(())
     }
 }
 

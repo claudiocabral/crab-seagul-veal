@@ -5,7 +5,6 @@ pub struct TransactionId(pub u32);
 
 #[derive(Debug, PartialEq)]
 pub enum TransactionError {
-    Overdraw(Number, Number),
     RepeatedTransactionId(TransactionId),
     UnknownTransactionId(TransactionId),
     UnknownClientId(ClientId),
@@ -17,7 +16,11 @@ pub enum TransactionError {
         available: Number,
         held: Number,
         transaction_amount: Number,
-        maximum: Number,
+    },
+    Underflow {
+        available: Number,
+        held: Number,
+        transaction_amount: Number,
     },
 }
 pub type TransactionResult = Result<(), TransactionError>;
@@ -51,30 +54,9 @@ impl TransactionEntry {
             ));
         }
         match &self.operation {
-            Operation::Deposit => self.deposit(account),
-            Operation::Withdrawal => self.withdraw(account),
+            Operation::Deposit => account.deposit(self.amount),
+            Operation::Withdrawal => account.withdraw(self.amount),
         }
-    }
-    fn deposit(&self, account: &mut Account) -> TransactionResult {
-        match account.available.checked_add(self.amount) {
-            Some(value) => {
-                account.available = value;
-                Ok(())
-            }
-            None => Err(TransactionError::Overflow {
-                available: account.available,
-                held: account.held,
-                transaction_amount: self.amount,
-                maximum: Number::MAX,
-            }),
-        }
-    }
-    fn withdraw(&self, account: &mut Account) -> TransactionResult {
-        if account.available < self.amount {
-            return Err(TransactionError::Overdraw(account.available, self.amount));
-        }
-        account.available -= self.amount;
-        Ok(())
     }
 }
 
@@ -151,7 +133,6 @@ impl DisputeEntry {
                     available: account.available,
                     held: account.held,
                     transaction_amount: transaction.amount,
-                    maximum: Number::MAX,
                 })
             }
         }
@@ -177,7 +158,6 @@ impl DisputeEntry {
                     available: account.available,
                     held: account.held,
                     transaction_amount: transaction.amount,
-                    maximum: Number::MAX,
                 })
             }
         }
