@@ -113,23 +113,12 @@ impl DisputeEntry {
         account: &mut Account,
         transaction: &mut TransactionEntry,
     ) -> TransactionResult {
-        let new_available = account.available.checked_sub(transaction.amount);
-        let new_held = account.held.checked_add(transaction.amount);
-        match (new_available, new_held) {
-            (Some(available), Some(held)) => {
-                account.available = available;
-                account.held = held;
+        match account.dispute(transaction.amount) {
+            Ok(_) => {
                 transaction.disputed = true;
                 Ok(())
             }
-            _ => {
-                account.locked = true;
-                Err(TransactionError::Overflow {
-                    available: account.available,
-                    held: account.held,
-                    transaction_amount: transaction.amount,
-                })
-            }
+            Err(err) => Err(TransactionError::AccountError(err)),
         }
     }
 
