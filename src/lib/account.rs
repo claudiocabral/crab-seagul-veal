@@ -94,6 +94,34 @@ impl Account {
             }
         }
     }
+    pub fn resolve(&mut self, amount: Number) -> AccountResult {
+        self.check_locked()?;
+        let new_available = self.available.checked_add(amount);
+        let new_held = self.held.checked_sub(amount);
+        match (new_available, new_held) {
+            (Some(available), Some(held)) => {
+                self.available = available;
+                self.held = held;
+                Ok(())
+            }
+            (Some(_), None) | (None, None) => {
+                self.locked = true;
+                Err(AccountError::Overflow {
+                    available: self.available,
+                    held: self.held,
+                    transaction_amount: amount,
+                })
+            }
+            (None, Some(_)) => {
+                self.locked = true;
+                Err(AccountError::Underflow {
+                    available: self.available,
+                    held: self.held,
+                    transaction_amount: amount,
+                })
+            }
+        }
+    }
     pub fn chargeback(&mut self, amount: Number) {
         self.held -= amount;
         self.locked = true;
