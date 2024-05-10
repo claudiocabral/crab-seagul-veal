@@ -8,12 +8,6 @@ use super::{
 
 use std::collections::HashMap;
 
-pub enum TransactionType {
-    Dispute,
-    Resolve,
-    Chargeback,
-}
-
 pub struct Ledger {
     accounts: HashMap<ClientId, Account>,
     transactions: HashMap<TransactionId, TransactionEntry>,
