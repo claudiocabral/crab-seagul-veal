@@ -1,7 +1,5 @@
-use fixed::types::extra::*;
-use fixed::FixedU64;
-
-pub type Number = FixedU64<U14>;
+pub type Number = rust_decimal::Decimal;
+pub use rust_decimal_macros::dec as num;
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Default)]
 pub struct ClientId(pub u16);
@@ -139,19 +137,19 @@ impl Account {
 
 #[cfg(test)]
 mod account_tests {
+    use super::num;
     use super::Number;
 
     #[test]
     fn verify_precision() {
-        /*
-         * these asserts guarantee that we meet the minimum precision required
-         * and give us a quick overview of the highest value we support.
-         * Changing the precision will trigger a failure and require these tests to be
-         * updated to reflect the new delta and maximum values.
-         * the current maximum value is over 1 quadrilion and should be enough to support
-         * accounts even in extremely inflated currencies
-         */
-        assert!(Number::DELTA <= 0.0001);
-        assert_eq!(Number::MAX.floor(), 1_125_899_906_842_623_u64);
+        let mut a = Number::ZERO;
+        for _ in 0..10_000 {
+            a += num!(0.0001);
+        }
+        assert_eq!(a, num!(1.0));
+        for _ in 0..10_000 {
+            a -= num!(0.0001);
+        }
+        assert_eq!(a, num!(0.0));
     }
 }

@@ -1,8 +1,8 @@
-use super::super::{
-    account::ClientId, account::Number, ledger::Ledger, transactions::Operation,
+use super::TransactionResult;
+use crate::{
+    account::num, account::ClientId, account::Number, ledger::Ledger, transactions::Operation,
     transactions::Transaction, transactions::TransactionError, transactions::TransactionId,
 };
-use super::TransactionResult;
 
 type TransactionList = Vec<(TransactionId, Transaction)>;
 
@@ -21,7 +21,7 @@ fn simple_deposit() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![(
         TransactionId(1),
-        Transaction::new(ClientId(1), Number::from_num(50.0), Operation::Deposit),
+        Transaction::new(ClientId(1), num!(50.0), Operation::Deposit),
     )];
     process_transactions(&mut ledger, &transactions)
         .enumerate()
@@ -33,8 +33,11 @@ fn simple_deposit() {
                 res.unwrap_err()
             )
         });
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 50.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        num!(50.0)
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(0.0));
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 1);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
@@ -47,11 +50,11 @@ fn simple_withdrawal() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::new(ClientId(1), Number::from_num(1.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(1.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction::new(ClientId(1), Number::from_num(0.9999), Operation::Withdrawal),
+            Transaction::new(ClientId(1), num!(0.9999), Operation::Withdrawal),
         ),
     ];
     process_transactions(&mut ledger, &transactions)
@@ -66,9 +69,9 @@ fn simple_withdrawal() {
         });
     assert_eq!(
         ledger.accounts.get(&ClientId(1)).unwrap().available(),
-        Number::from_num(0.0001)
+        num!(0.0001)
     );
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(0.0));
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
@@ -81,11 +84,11 @@ fn simple_dispute() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::new(ClientId(1), Number::from_num(50.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(50.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction::new(ClientId(1), Number::from_num(20.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(20.0), Operation::Deposit),
         ),
         (
             TransactionId(1),
@@ -102,8 +105,14 @@ fn simple_dispute() {
                 res.unwrap_err()
             )
         });
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 20.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 50.0);
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        num!(20.0)
+    );
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().held(),
+        num!(50.0)
+    );
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
@@ -116,11 +125,11 @@ fn simple_resolve() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::new(ClientId(1), Number::from_num(35.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(35.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction::new(ClientId(1), Number::from_num(35.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(35.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
@@ -141,8 +150,11 @@ fn simple_resolve() {
                 res.unwrap_err()
             )
         });
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 70.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        num!(70.0)
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(0.0));
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(2)).unwrap();
@@ -152,7 +164,7 @@ fn simple_resolve() {
 #[test]
 fn cant_resolve_undisputed_transaction() {
     let mut ledger = Ledger::new();
-    let deposit = Transaction::new(ClientId(1), Number::from_num(0.01), Operation::Deposit);
+    let deposit = Transaction::new(ClientId(1), num!(0.01), Operation::Deposit);
     let transaction_id = TransactionId(1);
     let _ = ledger.apply_transaction(transaction_id, &deposit);
     let res = ledger.apply_transaction(
@@ -165,9 +177,9 @@ fn cant_resolve_undisputed_transaction() {
     );
     assert_eq!(
         ledger.accounts.get(&ClientId(1)).unwrap().available(),
-        Number::from_num(0.01)
+        num!(0.01)
     );
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(0.0));
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 1);
 }
@@ -175,7 +187,7 @@ fn cant_resolve_undisputed_transaction() {
 #[test]
 fn cant_chargeback_undisputed_transaction() {
     let mut ledger = Ledger::new();
-    let deposit = Transaction::new(ClientId(1), Number::from_num(0.01), Operation::Deposit);
+    let deposit = Transaction::new(ClientId(1), num!(0.01), Operation::Deposit);
     let transaction_id = TransactionId(1);
     let _ = ledger.apply_transaction(transaction_id, &deposit);
     let res = ledger.apply_transaction(
@@ -188,9 +200,9 @@ fn cant_chargeback_undisputed_transaction() {
     );
     assert_eq!(
         ledger.accounts.get(&ClientId(1)).unwrap().available(),
-        Number::from_num(0.01)
+        num!(0.01)
     );
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(0.0));
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 1);
 }
@@ -201,11 +213,11 @@ fn simple_chargeback() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::new(ClientId(1), Number::from_num(40.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(40.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction::new(ClientId(1), Number::from_num(20.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(20.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
@@ -226,8 +238,11 @@ fn simple_chargeback() {
                 res.unwrap_err()
             )
         });
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 40.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        num!(40.0)
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(0.0));
     assert!(ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(2)).unwrap();
@@ -240,11 +255,11 @@ fn dispute_without_funds() {
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
             TransactionId(1),
-            Transaction::new(ClientId(1), Number::from_num(1.0), Operation::Deposit),
+            Transaction::new(ClientId(1), num!(1.0), Operation::Deposit),
         ),
         (
             TransactionId(2),
-            Transaction::new(ClientId(1), Number::from_num(1.0), Operation::Withdrawal),
+            Transaction::new(ClientId(1), num!(1.0), Operation::Withdrawal),
         ),
         (
             TransactionId(1),
@@ -252,10 +267,13 @@ fn dispute_without_funds() {
         ),
     ];
     let res = process_transactions(&mut ledger, &transactions).all(|res| res.is_ok());
-    assert!(!res);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
-    assert!(ledger.accounts.get(&ClientId(1)).unwrap().locked());
+    assert!(res);
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        num!(-1.0)
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), num!(1.0));
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
 }
 
 #[test]
@@ -267,17 +285,20 @@ fn cant_withdrawal_with_same_id() {
     );
     let _ = ledger.apply_transaction(
         TransactionId(1),
-        &Transaction::new(ClientId(1), Number::from_num(0.5), Operation::Withdrawal),
+        &Transaction::new(ClientId(1), num!(0.5), Operation::Withdrawal),
     );
     let res = ledger.apply_transaction(
         TransactionId(1),
-        &Transaction::new(ClientId(1), Number::from_num(0.5), Operation::Withdrawal),
+        &Transaction::new(ClientId(1), num!(0.5), Operation::Withdrawal),
     );
     assert_eq!(
         res.err().unwrap(),
         TransactionError::RepeatedTransactionId(TransactionId(1))
     );
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 0.5,);
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        num!(0.5)
+    );
 }
 
 #[test]
@@ -289,7 +310,7 @@ fn cant_deposit_with_same_id() {
     );
     let res = ledger.apply_transaction(
         TransactionId(0),
-        &Transaction::new(ClientId(1), Number::from_num(0.5), Operation::Deposit),
+        &Transaction::new(ClientId(1), num!(0.5), Operation::Deposit),
     );
     assert_eq!(
         res.err().unwrap(),
