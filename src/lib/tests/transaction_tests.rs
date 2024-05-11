@@ -150,6 +150,52 @@ fn test_simple_resolve() {
 }
 
 #[test]
+fn test_cant_resolve_undisputed_transaction() {
+    let mut ledger = Ledger::new();
+    let deposit = Transaction::new(ClientId(1), Number::from_num(0.01), Operation::Deposit);
+    let transaction_id = TransactionId(1);
+    let _ = ledger.apply_transaction(transaction_id, &deposit);
+    let res = ledger.apply_transaction(
+        transaction_id,
+        &Transaction::new(ClientId(1), Number::ZERO, Operation::Resolve),
+    );
+    assert_eq!(
+        res.unwrap_err(),
+        TransactionError::UndisputedTransaction(transaction_id)
+    );
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        Number::from_num(0.01)
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
+    assert_eq!(ledger.transactions.len(), 1);
+}
+
+#[test]
+fn test_cant_chargeback_undisputed_transaction() {
+    let mut ledger = Ledger::new();
+    let deposit = Transaction::new(ClientId(1), Number::from_num(0.01), Operation::Deposit);
+    let transaction_id = TransactionId(1);
+    let _ = ledger.apply_transaction(transaction_id, &deposit);
+    let res = ledger.apply_transaction(
+        transaction_id,
+        &Transaction::new(ClientId(1), Number::ZERO, Operation::Chargeback),
+    );
+    assert_eq!(
+        res.unwrap_err(),
+        TransactionError::UndisputedTransaction(transaction_id)
+    );
+    assert_eq!(
+        ledger.accounts.get(&ClientId(1)).unwrap().available(),
+        Number::from_num(0.01)
+    );
+    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
+    assert_eq!(ledger.transactions.len(), 1);
+}
+
+#[test]
 fn test_simple_chargeback() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
@@ -189,7 +235,7 @@ fn test_simple_chargeback() {
 }
 
 #[test]
-fn test_dispute_after_withdraw() {
+fn test_dispute_without_funds() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
