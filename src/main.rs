@@ -29,6 +29,18 @@ enum TransactionType {
     Chargeback,
 }
 
+impl From<TransactionType> for Operation {
+    fn from(value: TransactionType) -> Self {
+        match value {
+            TransactionType::Deposit => Operation::Deposit,
+            TransactionType::Withdrawal => Operation::Withdrawal,
+            TransactionType::Dispute => Operation::Dispute,
+            TransactionType::Resolve => Operation::Resolve,
+            TransactionType::Chargeback => Operation::Chargeback,
+        }
+    }
+}
+
 #[derive(serde::Deserialize)]
 struct CsvTransactionRecord {
     #[serde(rename = "type")]
@@ -72,13 +84,7 @@ fn process_transactions(
         let transaction_id = TransactionId(record.tx);
         let amount = Number::from_num(record.amount.unwrap_or(0.0));
         let client_id = ClientId(record.client);
-        let operation = match record.tx_type {
-            TransactionType::Deposit => Operation::Deposit,
-            TransactionType::Withdrawal => Operation::Withdrawal,
-            TransactionType::Dispute => Operation::Dispute,
-            TransactionType::Resolve => Operation::Resolve,
-            TransactionType::Chargeback => Operation::Chargeback,
-        };
+        let operation = Operation::from(record.tx_type);
         process(
             ledger,
             transaction_id,
