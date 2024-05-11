@@ -10,6 +10,12 @@ pub struct Ledger {
     transactions: HashMap<TransactionId, Transaction>,
 }
 
+impl Default for Ledger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ledger {
     pub fn new() -> Ledger {
         Ledger {

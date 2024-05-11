@@ -152,6 +152,6 @@ mod account_tests {
          * accounts even in extremely inflated currencies
          */
         assert!(Number::DELTA <= 0.0001);
-        assert_eq!(Number::MAX.floor(), 1_125_899_906_842_623 as u64);
+        assert_eq!(Number::MAX.floor(), 1_125_899_906_842_623_u64);
     }
 }

@@ -98,10 +98,8 @@ impl Transaction {
             if transaction.disputed {
                 return Err(TransactionError::AlreadyDisputed(transaction_id));
             }
-        } else {
-            if !transaction.disputed {
-                return Err(TransactionError::UndisputedTransaction(*self));
-            }
+        } else if !transaction.disputed {
+            return Err(TransactionError::UndisputedTransaction(*self));
         }
         Ok(())
     }

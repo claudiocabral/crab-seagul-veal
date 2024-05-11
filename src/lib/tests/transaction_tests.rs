@@ -10,7 +10,7 @@ fn process_transactions<'a>(
     ledger: &'a mut Ledger,
     transactions: &'a TransactionList,
 ) -> impl Iterator<Item = TransactionResult> + 'a {
-    transactions.into_iter().map(move |t| {
+    transactions.iter().map(move |t| {
         let (id, transaction) = t;
         ledger.apply_transaction(*id, transaction)
     })
@@ -35,10 +35,10 @@ fn test_simple_deposit() {
         });
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 50.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), false);
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 1);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
-    assert_eq!(transaction.disputed(), false);
+    assert!(!transaction.disputed());
 }
 
 #[test]
@@ -69,10 +69,10 @@ fn test_simple_withdrawal() {
         Number::from_num(0.0001)
     );
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), false);
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
-    assert_eq!(transaction.disputed(), false);
+    assert!(!transaction.disputed());
 }
 
 #[test]
@@ -104,10 +104,10 @@ fn test_simple_dispute() {
         });
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 20.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 50.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), false);
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
-    assert_eq!(transaction.disputed(), true);
+    assert!(transaction.disputed());
 }
 
 #[test]
@@ -143,10 +143,10 @@ fn test_simple_resolve() {
         });
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 70.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), false);
+    assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(2)).unwrap();
-    assert_eq!(transaction.disputed(), false);
+    assert!(!transaction.disputed());
 }
 
 #[test]
@@ -182,10 +182,10 @@ fn test_simple_chargeback() {
         });
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 40.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), true);
+    assert!(ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(2)).unwrap();
-    assert!(transaction.disputed() == false);
+    assert!(!transaction.disputed());
 }
 
 #[test]
@@ -206,10 +206,10 @@ fn test_dispute_after_withdraw() {
         ),
     ];
     let res = process_transactions(&mut ledger, &transactions).all(|res| res.is_ok());
-    assert_eq!(res, false);
+    assert!(!res);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().available(), 0.0);
     assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().held(), 0.0);
-    assert_eq!(ledger.accounts.get(&ClientId(1)).unwrap().locked(), true);
+    assert!(ledger.accounts.get(&ClientId(1)).unwrap().locked());
 }
 
 #[test]
