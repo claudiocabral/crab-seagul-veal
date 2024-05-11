@@ -2,6 +2,7 @@ use super::TransactionResult;
 use crate::{
     account::num, account::ClientId, account::Number, ledger::Ledger, transactions::Operation,
     transactions::Transaction, transactions::TransactionError, transactions::TransactionId,
+    transactions::TransactionState,
 };
 
 type TransactionList = Vec<(TransactionId, Transaction)>;
@@ -41,7 +42,7 @@ fn simple_deposit() {
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 1);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
-    assert!(!transaction.disputed());
+    assert_eq!(transaction.state(), TransactionState::Ok);
 }
 
 #[test]
@@ -75,7 +76,7 @@ fn simple_withdrawal() {
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
-    assert!(!transaction.disputed());
+    assert_eq!(transaction.state(), TransactionState::Ok);
 }
 
 #[test]
@@ -116,7 +117,7 @@ fn simple_dispute() {
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(1)).unwrap();
-    assert!(transaction.disputed());
+    assert_eq!(transaction.state(), TransactionState::Disputed);
 }
 
 #[test]
@@ -158,7 +159,7 @@ fn simple_resolve() {
     assert!(!ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(2)).unwrap();
-    assert!(!transaction.disputed());
+    assert_eq!(transaction.state(), TransactionState::Ok);
 }
 
 #[test]
@@ -246,7 +247,7 @@ fn simple_chargeback() {
     assert!(ledger.accounts.get(&ClientId(1)).unwrap().locked());
     assert_eq!(ledger.transactions.len(), 2);
     let transaction = ledger.transactions.get(&TransactionId(2)).unwrap();
-    assert!(!transaction.disputed());
+    assert_eq!(transaction.state(), TransactionState::Chargedback);
 }
 
 #[test]

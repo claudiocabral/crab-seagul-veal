@@ -26,11 +26,19 @@ pub enum Operation {
     Resolve,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
+pub enum TransactionState {
+    #[default]
+    Ok,
+    Disputed,
+    Chargedback,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Transaction {
     client_id: ClientId,
     amount: Number,
-    disputed: bool,
+    state: TransactionState,
     operation: Operation,
 }
 
@@ -40,7 +48,7 @@ impl Transaction {
             amount,
             client_id,
             operation,
-            disputed: false,
+            state: TransactionState::default(),
         }
     }
     pub fn operation(&self) -> Operation {
@@ -52,13 +60,13 @@ impl Transaction {
     pub fn client_id(&self) -> ClientId {
         self.client_id
     }
-    pub fn disputed(&self) -> bool {
-        self.disputed
+    pub fn state(&self) -> TransactionState {
+        self.state
     }
     pub fn dispute(&mut self, account: &mut Account) -> TransactionResult {
         match account.dispute(self.amount) {
             Ok(_) => {
-                self.disputed = true;
+                self.state = TransactionState::Disputed;
                 Ok(())
             }
             Err(err) => Err(TransactionError::AccountError(self.client_id(), err)),
@@ -68,7 +76,7 @@ impl Transaction {
     pub fn resolve(&mut self, account: &mut Account) -> TransactionResult {
         match account.resolve(self.amount) {
             Ok(_) => {
-                self.disputed = false;
+                self.state = TransactionState::Ok;
                 Ok(())
             }
             Err(err) => Err(TransactionError::AccountError(self.client_id(), err)),
@@ -77,7 +85,7 @@ impl Transaction {
 
     pub fn chargeback(&mut self, account: &mut Account) -> TransactionResult {
         account.chargeback(self.amount);
-        self.disputed = false;
+        self.state = TransactionState::Chargedback;
         Ok(())
     }
 
@@ -95,10 +103,10 @@ impl Transaction {
 
         // this could be condensed in a single clever if block, but I think this is more readable
         if self.operation == Operation::Dispute {
-            if transaction.disputed {
+            if transaction.state != TransactionState::Ok {
                 return Err(TransactionError::AlreadyDisputed(transaction_id));
             }
-        } else if !transaction.disputed {
+        } else if transaction.state != TransactionState::Disputed {
             return Err(TransactionError::UndisputedTransaction(transaction_id));
         }
         Ok(())
