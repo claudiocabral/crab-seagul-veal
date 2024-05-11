@@ -113,9 +113,9 @@ fn main() -> std::thread::Result<()> {
     for (key, account) in ledger {
         let val = CsvAccountRecord {
             client: key.0,
-            available: account.available().to_string(),
-            held: account.held().to_string(),
-            total: account.total().to_string(),
+            available: format!("{:.4}", account.available()),
+            held: format!("{:.4}", account.held()),
+            total: format!("{:.4}", account.total()),
             locked: account.locked(),
         };
         let _ = writer.serialize(val);
