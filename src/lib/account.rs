@@ -48,17 +48,15 @@ impl Account {
         }
     }
     pub fn deposit(&mut self, amount: Number) -> AccountResult {
-        match self.available.checked_add(amount) {
-            Some(value) => {
-                self.available = value;
-                Ok(())
-            }
-            None => Err(AccountError::Overflow {
+        self.available = self
+            .available
+            .checked_add(amount)
+            .ok_or(AccountError::Overflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
-            }),
-        }
+            })?;
+        Ok(())
     }
     pub fn withdraw(&mut self, amount: Number) -> AccountResult {
         self.check_locked()?;
@@ -73,46 +71,47 @@ impl Account {
         Ok(())
     }
     pub fn dispute(&mut self, amount: Number) -> AccountResult {
-        let new_available = self.available.checked_sub(amount);
-        let new_held = self.held.checked_add(amount);
-        match (new_available, new_held) {
-            (Some(available), Some(held)) => {
-                self.available = available;
-                self.held = held;
-                Ok(())
-            }
-            (Some(_), None) | (None, None) => Err(AccountError::Underflow {
+        let available = self
+            .available
+            .checked_sub(amount)
+            .ok_or(AccountError::Underflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
-            }),
-            (None, Some(_)) => Err(AccountError::Overflow {
+            })?;
+        let held = self
+            .held
+            .checked_add(amount)
+            .ok_or(AccountError::Overflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
-            }),
-        }
+            })?;
+        self.available = available;
+        self.held = held;
+        Ok(())
     }
     pub fn resolve(&mut self, amount: Number) -> AccountResult {
-        let new_available = self.available.checked_add(amount);
-        let new_held = self.held.checked_sub(amount);
-        match (new_available, new_held) {
-            (Some(available), Some(held)) => {
-                self.available = available;
-                self.held = held;
-                Ok(())
-            }
-            (Some(_), None) | (None, None) => Err(AccountError::Overflow {
+        let available = self
+            .available
+            .checked_add(amount)
+            .ok_or(AccountError::Overflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
-            }),
-            (None, Some(_)) => Err(AccountError::Underflow {
+            })?;
+
+        let held = self
+            .held
+            .checked_sub(amount)
+            .ok_or(AccountError::Underflow {
                 available: self.available,
                 held: self.held,
                 transaction_amount: amount,
-            }),
-        }
+            })?;
+        self.available = available;
+        self.held = held;
+        Ok(())
     }
     pub fn chargeback(&mut self, amount: Number) {
         self.held -= amount;
