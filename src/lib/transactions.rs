@@ -11,8 +11,7 @@ pub enum TransactionError {
     UnknownClientId(ClientId),
     MismatchedClientId(ClientId, ClientId),
     AlreadyDisputed(TransactionId),
-    UndisputedDispute(Transaction),
-    UndisputedTransaction(Transaction),
+    UndisputedTransaction(TransactionId),
     AccountError(AccountError),
 }
 pub type TransactionResult = Result<(), TransactionError>;
@@ -99,7 +98,7 @@ impl Transaction {
                 return Err(TransactionError::AlreadyDisputed(transaction_id));
             }
         } else if !transaction.disputed {
-            return Err(TransactionError::UndisputedTransaction(*self));
+            return Err(TransactionError::UndisputedTransaction(transaction_id));
         }
         Ok(())
     }
