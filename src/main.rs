@@ -99,8 +99,8 @@ fn main() -> std::thread::Result<()> {
         ledger
     });
     for result in reader.deserialize::<CsvTransactionRecord>() {
-        if result.is_ok() {
-            let _ = tx.send(result.unwrap());
+        if let Ok(record) = result {
+            let _ = tx.send(record);
         }
     }
     drop(tx);
