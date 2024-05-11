@@ -64,23 +64,19 @@ impl Transaction {
         self.state
     }
     pub fn dispute(&mut self, account: &mut Account) -> TransactionResult {
-        match account.dispute(self.amount) {
-            Ok(_) => {
-                self.state = TransactionState::Disputed;
-                Ok(())
-            }
-            Err(err) => Err(TransactionError::AccountError(self.client_id(), err)),
-        }
+        account
+            .dispute(self.amount)
+            .map_err(|err| TransactionError::AccountError(self.client_id(), err))?;
+        self.state = TransactionState::Disputed;
+        Ok(())
     }
 
     pub fn resolve(&mut self, account: &mut Account) -> TransactionResult {
-        match account.resolve(self.amount) {
-            Ok(_) => {
-                self.state = TransactionState::Ok;
-                Ok(())
-            }
-            Err(err) => Err(TransactionError::AccountError(self.client_id(), err)),
-        }
+        account
+            .resolve(self.amount)
+            .map_err(|err| TransactionError::AccountError(self.client_id(), err))?;
+        self.state = TransactionState::Ok;
+        Ok(())
     }
 
     pub fn chargeback(&mut self, account: &mut Account) -> TransactionResult {
