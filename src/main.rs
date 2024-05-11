@@ -47,7 +47,7 @@ struct CsvTransactionRecord {
     tx_type: TransactionType,
     client: u16,
     tx: u32,
-    amount: Option<f64>,
+    amount: Option<Number>,
 }
 
 #[derive(serde::Serialize)]
@@ -82,7 +82,7 @@ fn process_transactions(
 ) {
     while let Ok(record) = rx_channel.recv() {
         let transaction_id = TransactionId(record.tx);
-        let amount = Number::from_num(record.amount.unwrap_or(0.0));
+        let amount = record.amount.unwrap_or_default();
         let client_id = ClientId(record.client);
         let operation = Operation::from(record.tx_type);
         process(
