@@ -5,9 +5,12 @@ use super::{
 
 use std::collections::HashMap;
 
+type AccountMap = HashMap<ClientId, Account>;
+type TransactionMap = HashMap<TransactionId, Transaction>;
+
 pub struct Ledger {
-    accounts: HashMap<ClientId, Account>,
-    transactions: HashMap<TransactionId, Transaction>,
+    accounts: AccountMap,
+    transactions: TransactionMap,
 }
 
 impl Default for Ledger {
@@ -19,8 +22,8 @@ impl Default for Ledger {
 impl Ledger {
     pub fn new() -> Ledger {
         Ledger {
-            accounts: HashMap::with_capacity(u16::MAX as usize),
-            transactions: HashMap::with_capacity(128),
+            accounts: AccountMap::with_capacity(u16::MAX as usize),
+            transactions: TransactionMap::with_capacity(128),
         }
     }
 
@@ -96,9 +99,8 @@ impl Ledger {
 }
 
 impl IntoIterator for Ledger {
-    type Item = (ClientId, Account);
-
-    type IntoIter = std::collections::hash_map::IntoIter<ClientId, Account>;
+    type Item = <AccountMap as IntoIterator>::Item;
+    type IntoIter = <AccountMap as IntoIterator>::IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
         self.accounts.into_iter()
