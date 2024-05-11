@@ -64,7 +64,7 @@ impl Ledger {
                 let account = self.get_or_insert_account_mut(transaction.client_id());
                 match account.deposit(transaction.amount()) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(TransactionError::AccountError(err)),
+                    Err(err) => Err(TransactionError::AccountError(transaction.client_id(), err)),
                 }
             }
             Operation::Withdrawal => {
@@ -73,7 +73,7 @@ impl Ledger {
                 let account = self.get_or_insert_account_mut(transaction.client_id());
                 match account.withdraw(transaction.amount()) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(TransactionError::AccountError(err)),
+                    Err(err) => Err(TransactionError::AccountError(transaction.client_id(), err)),
                 }
             }
             Operation::Dispute => {

@@ -12,7 +12,7 @@ pub enum TransactionError {
     MismatchedClientId(ClientId, ClientId),
     AlreadyDisputed(TransactionId),
     UndisputedTransaction(TransactionId),
-    AccountError(AccountError),
+    AccountError(ClientId, AccountError),
 }
 pub type TransactionResult = Result<(), TransactionError>;
 
@@ -60,7 +60,7 @@ impl Transaction {
                 self.disputed = true;
                 Ok(())
             }
-            Err(err) => Err(TransactionError::AccountError(err)),
+            Err(err) => Err(TransactionError::AccountError(self.client_id(), err)),
         }
     }
 
@@ -70,7 +70,7 @@ impl Transaction {
                 self.disputed = false;
                 Ok(())
             }
-            Err(err) => Err(TransactionError::AccountError(err)),
+            Err(err) => Err(TransactionError::AccountError(self.client_id(), err)),
         }
     }
 
