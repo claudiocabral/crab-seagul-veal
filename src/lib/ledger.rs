@@ -1,5 +1,3 @@
-#![allow(warnings)]
-
 use super::{
     account::Account, account::ClientId, transactions::Operation, transactions::Transaction,
     transactions::TransactionError, transactions::TransactionId, transactions::TransactionResult,
@@ -54,7 +52,7 @@ impl Ledger {
             Operation::Deposit => {
                 self.id_exists(transaction_id)?;
                 self.transactions.insert(transaction_id, *transaction);
-                let mut account = self.get_or_insert_account_mut(transaction.client_id());
+                let account = self.get_or_insert_account_mut(transaction.client_id());
                 match account.deposit(transaction.amount()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(TransactionError::AccountError(err)),
@@ -63,7 +61,7 @@ impl Ledger {
             Operation::Withdrawal => {
                 self.id_exists(transaction_id)?;
                 self.transactions.insert(transaction_id, *transaction);
-                let mut account = self.get_or_insert_account_mut(transaction.client_id());
+                let account = self.get_or_insert_account_mut(transaction.client_id());
                 match account.withdraw(transaction.amount()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(TransactionError::AccountError(err)),
