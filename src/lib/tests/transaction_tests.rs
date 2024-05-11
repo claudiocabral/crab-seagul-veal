@@ -17,7 +17,7 @@ fn process_transactions<'a>(
 }
 
 #[test]
-fn test_simple_deposit() {
+fn simple_deposit() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![(
         TransactionId(1),
@@ -42,7 +42,7 @@ fn test_simple_deposit() {
 }
 
 #[test]
-fn test_simple_withdrawal() {
+fn simple_withdrawal() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
@@ -76,7 +76,7 @@ fn test_simple_withdrawal() {
 }
 
 #[test]
-fn test_simple_dispute() {
+fn simple_dispute() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
@@ -111,7 +111,7 @@ fn test_simple_dispute() {
 }
 
 #[test]
-fn test_simple_resolve() {
+fn simple_resolve() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
@@ -150,7 +150,7 @@ fn test_simple_resolve() {
 }
 
 #[test]
-fn test_cant_resolve_undisputed_transaction() {
+fn cant_resolve_undisputed_transaction() {
     let mut ledger = Ledger::new();
     let deposit = Transaction::new(ClientId(1), Number::from_num(0.01), Operation::Deposit);
     let transaction_id = TransactionId(1);
@@ -173,7 +173,7 @@ fn test_cant_resolve_undisputed_transaction() {
 }
 
 #[test]
-fn test_cant_chargeback_undisputed_transaction() {
+fn cant_chargeback_undisputed_transaction() {
     let mut ledger = Ledger::new();
     let deposit = Transaction::new(ClientId(1), Number::from_num(0.01), Operation::Deposit);
     let transaction_id = TransactionId(1);
@@ -196,7 +196,7 @@ fn test_cant_chargeback_undisputed_transaction() {
 }
 
 #[test]
-fn test_simple_chargeback() {
+fn simple_chargeback() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
@@ -235,7 +235,7 @@ fn test_simple_chargeback() {
 }
 
 #[test]
-fn test_dispute_without_funds() {
+fn dispute_without_funds() {
     let mut ledger = Ledger::new();
     let transactions: Vec<(TransactionId, Transaction)> = vec![
         (
@@ -259,7 +259,7 @@ fn test_dispute_without_funds() {
 }
 
 #[test]
-fn test_cant_withdrawal_with_same_id() {
+fn cant_withdrawal_with_same_id() {
     let mut ledger = Ledger::new();
     let _ = ledger.apply_transaction(
         TransactionId(0),
@@ -281,7 +281,7 @@ fn test_cant_withdrawal_with_same_id() {
 }
 
 #[test]
-fn test_cant_deposit_with_same_id() {
+fn cant_deposit_with_same_id() {
     let mut ledger = Ledger::new();
     let _ = ledger.apply_transaction(
         TransactionId(0),
