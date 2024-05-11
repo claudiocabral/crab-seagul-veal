@@ -98,10 +98,8 @@ fn main() -> std::thread::Result<()> {
         process_transactions(rx, debug, &mut ledger);
         ledger
     });
-    for result in reader.deserialize::<CsvTransactionRecord>() {
-        if let Ok(record) = result {
-            let _ = tx.send(record);
-        }
+    for record in reader.deserialize::<CsvTransactionRecord>().flatten() {
+        let _ = tx.send(record);
     }
     drop(tx);
     let ledger = handler.join()?;
