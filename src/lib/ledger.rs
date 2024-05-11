@@ -48,9 +48,10 @@ impl Ledger {
     }
 
     fn id_exists(&self, transaction_id: TransactionId) -> TransactionResult {
-        match self.transactions.contains_key(&transaction_id) {
-            true => Err(TransactionError::RepeatedTransactionId(transaction_id)),
-            false => Ok(()),
+        if self.transactions.contains_key(&transaction_id) {
+            Err(TransactionError::RepeatedTransactionId(transaction_id))
+        } else {
+            Ok(())
         }
     }
     pub fn apply_transaction(
@@ -68,22 +69,20 @@ impl Ledger {
             Operation::Deposit => {
                 self.id_exists(transaction_id)?;
                 let account = self.get_or_insert_account_mut(transaction.client_id());
-                let res = match account.deposit(transaction.amount()) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(TransactionError::AccountError(transaction.client_id(), err)),
-                };
+                account
+                    .deposit(transaction.amount())
+                    .map_err(|err| TransactionError::AccountError(transaction.client_id(), err))?;
                 self.transactions.insert(transaction_id, *transaction);
-                res
+                Ok(())
             }
             Operation::Withdrawal => {
                 self.id_exists(transaction_id)?;
                 let account = self.get_or_insert_account_mut(transaction.client_id());
-                let res = match account.withdraw(transaction.amount()) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(TransactionError::AccountError(transaction.client_id(), err)),
-                };
+                account
+                    .withdraw(transaction.amount())
+                    .map_err(|err| TransactionError::AccountError(transaction.client_id(), err))?;
                 self.transactions.insert(transaction_id, *transaction);
-                res
+                Ok(())
             }
             Operation::Dispute => {
                 let (disputed_transaction, account) =
