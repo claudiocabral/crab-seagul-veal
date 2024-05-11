@@ -63,6 +63,7 @@ impl Transaction {
     pub fn state(&self) -> TransactionState {
         self.state
     }
+
     pub fn dispute(&mut self, account: &mut Account) -> TransactionResult {
         account
             .dispute(self.amount)
@@ -85,6 +86,18 @@ impl Transaction {
         Ok(())
     }
 
+    pub fn state_matches_or(
+        &self,
+        state: TransactionState,
+        err: TransactionError,
+    ) -> TransactionResult {
+        if self.state == state {
+            Ok(())
+        } else {
+            Err(err)
+        }
+    }
+
     pub fn check_valid_dispute(
         &self,
         transaction_id: TransactionId,
@@ -98,15 +111,6 @@ impl Transaction {
                 self.client_id,
                 transaction.client_id,
             ));
-        }
-
-        // this could be condensed in a single clever if block, but I think this is more readable
-        if self.operation == Operation::Dispute {
-            if transaction.state != TransactionState::Ok {
-                return Err(TransactionError::AlreadyDisputed(transaction_id));
-            }
-        } else if transaction.state != TransactionState::Disputed {
-            return Err(TransactionError::UndisputedTransaction(transaction_id));
         }
         Ok(())
     }

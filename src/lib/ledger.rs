@@ -1,7 +1,7 @@
 use super::{
     account::Account, account::ClientId, account::Number, transactions::Operation,
     transactions::Transaction, transactions::TransactionError, transactions::TransactionId,
-    transactions::TransactionResult,
+    transactions::TransactionResult, transactions::TransactionState,
 };
 
 use std::collections::HashMap;
@@ -88,18 +88,30 @@ impl Ledger {
                 let (disputed_transaction, account) =
                     self.get_transaction_and_account_mut(transaction_id, transaction.client_id())?;
                 transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
+                disputed_transaction.state_matches_or(
+                    TransactionState::Ok,
+                    TransactionError::AlreadyDisputed(transaction_id),
+                )?;
                 disputed_transaction.dispute(account)
             }
             Operation::Resolve => {
                 let (disputed_transaction, account) =
                     self.get_transaction_and_account_mut(transaction_id, transaction.client_id())?;
                 transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
+                disputed_transaction.state_matches_or(
+                    TransactionState::Disputed,
+                    TransactionError::UndisputedTransaction(transaction_id),
+                )?;
                 disputed_transaction.resolve(account)
             }
             Operation::Chargeback => {
                 let (disputed_transaction, account) =
                     self.get_transaction_and_account_mut(transaction_id, transaction.client_id())?;
                 transaction.check_valid_dispute(transaction_id, disputed_transaction)?;
+                disputed_transaction.state_matches_or(
+                    TransactionState::Disputed,
+                    TransactionError::UndisputedTransaction(transaction_id),
+                )?;
                 disputed_transaction.chargeback(account)
             }
         }
