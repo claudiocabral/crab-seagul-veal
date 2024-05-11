@@ -94,6 +94,9 @@ impl Transaction {
         transaction_id: TransactionId,
         transaction: &Transaction,
     ) -> TransactionResult {
+        if transaction.operation != Operation::Deposit {
+            return Err(TransactionError::AlreadyDisputed(transaction_id));
+        }
         if self.client_id != transaction.client_id {
             return Err(TransactionError::MismatchedClientId(
                 self.client_id,
