@@ -13,6 +13,7 @@ pub enum TransactionError {
     AlreadyDisputed(TransactionId),
     UndisputedTransaction(TransactionId),
     AccountError(ClientId, AccountError),
+    InvalidAmount(TransactionId, Number),
 }
 pub type TransactionResult = Result<(), TransactionError>;
 

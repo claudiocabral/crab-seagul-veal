@@ -1,6 +1,7 @@
 use super::{
-    account::Account, account::ClientId, transactions::Operation, transactions::Transaction,
-    transactions::TransactionError, transactions::TransactionId, transactions::TransactionResult,
+    account::Account, account::ClientId, account::Number, transactions::Operation,
+    transactions::Transaction, transactions::TransactionError, transactions::TransactionId,
+    transactions::TransactionResult,
 };
 
 use std::collections::HashMap;
@@ -57,6 +58,12 @@ impl Ledger {
         transaction_id: TransactionId,
         transaction: &Transaction,
     ) -> TransactionResult {
+        if transaction.amount() < Number::ZERO {
+            return Err(TransactionError::InvalidAmount(
+                transaction_id,
+                transaction.amount(),
+            ));
+        }
         match transaction.operation() {
             Operation::Deposit => {
                 self.id_exists(transaction_id)?;
