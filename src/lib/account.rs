@@ -42,9 +42,10 @@ impl Account {
         self.locked
     }
     pub fn check_locked(&mut self) -> AccountResult {
-        match self.locked {
-            true => Err(AccountError::FrozenAccount(*self)),
-            false => Ok(()),
+        if self.locked {
+            Err(AccountError::FrozenAccount(*self))
+        } else {
+            Ok(())
         }
     }
     pub fn deposit(&mut self, amount: Number) -> AccountResult {
