@@ -67,21 +67,23 @@ impl Ledger {
         match transaction.operation() {
             Operation::Deposit => {
                 self.id_exists(transaction_id)?;
-                self.transactions.insert(transaction_id, *transaction);
                 let account = self.get_or_insert_account_mut(transaction.client_id());
-                match account.deposit(transaction.amount()) {
+                let res = match account.deposit(transaction.amount()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(TransactionError::AccountError(transaction.client_id(), err)),
-                }
+                };
+                self.transactions.insert(transaction_id, *transaction);
+                res
             }
             Operation::Withdrawal => {
                 self.id_exists(transaction_id)?;
-                self.transactions.insert(transaction_id, *transaction);
                 let account = self.get_or_insert_account_mut(transaction.client_id());
-                match account.withdraw(transaction.amount()) {
+                let res = match account.withdraw(transaction.amount()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(TransactionError::AccountError(transaction.client_id(), err)),
-                }
+                };
+                self.transactions.insert(transaction_id, *transaction);
+                res
             }
             Operation::Dispute => {
                 let (disputed_transaction, account) =
