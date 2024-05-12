@@ -1,6 +1,5 @@
-mod app;
-
 use clap::Parser;
+use crab::app;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]

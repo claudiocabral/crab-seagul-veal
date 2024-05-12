@@ -1,5 +1,5 @@
 /target
 *.csv
-!src/tests/data/*.csv
+!/tests/data/*.csv
 *.svg
 *.data

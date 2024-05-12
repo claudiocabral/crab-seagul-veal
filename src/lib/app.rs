@@ -1,12 +1,8 @@
 use std::{fs, io, sync::mpsc, thread};
 
-use crab::account::{ClientId, Number};
-use crab::ledger::Ledger;
-use crab::transactions::{Operation, Transaction, TransactionId};
-
-#[cfg(test)]
-#[path = "tests/test.rs"]
-mod tests;
+use super::account::{ClientId, Number};
+use super::ledger::Ledger;
+use super::transactions::{Operation, Transaction, TransactionId};
 
 fn create_reader(path: &String) -> csv::Reader<io::BufReader<fs::File>> {
     let file = fs::File::open(path).unwrap();

@@ -1,6 +1,6 @@
-use crate::app::process_file;
 use crab::account::Account;
 use crab::account::ClientId;
+use crab::app::process_file;
 use std::fs::read_to_string;
 
 // TODO: The serialization to CSV method here is different from the one used in main. These should
@@ -15,8 +15,8 @@ fn check_csv_files() {
         "03-10k_records",
     ];
     for file in files {
-        let input_file = format!("src/tests/data/{file}-input.csv");
-        let output_file = format!("src/tests/data/{file}-output.csv");
+        let input_file = format!("tests/data/{file}-input.csv");
+        let output_file = format!("tests/data/{file}-output.csv");
         let ledger = process_file(&input_file, false);
         let mut results: Vec<(ClientId, Account)> = ledger.into_iter().collect();
         let references: Vec<String> = read_to_string(output_file)
