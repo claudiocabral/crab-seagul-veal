@@ -1,7 +1,7 @@
 pub type Number = rust_decimal::Decimal;
 pub use rust_decimal_macros::dec as num;
 
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone, Default)]
 pub struct ClientId(pub u16);
 
 #[derive(Debug, PartialEq)]
@@ -131,10 +131,10 @@ mod account_tests {
         for _ in 0..10_000 {
             a += num!(0.0001);
         }
-        assert_eq!(a, num!(1.0));
+        assert_eq!(a, Number::ONE);
         for _ in 0..10_000 {
             a -= num!(0.0001);
         }
-        assert_eq!(a, num!(0.0));
+        assert_eq!(a, Number::ZERO);
     }
 }
