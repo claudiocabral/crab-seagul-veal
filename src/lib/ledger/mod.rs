@@ -128,5 +128,4 @@ impl IntoIterator for Ledger {
 }
 
 #[cfg(test)]
-#[path = "tests/transaction_tests.rs"]
 mod tests;
