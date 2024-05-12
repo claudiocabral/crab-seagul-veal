@@ -103,6 +103,7 @@ pub fn process_file(filename: &String, debug: bool) -> Ledger {
     drop(tx);
     handler.join().unwrap()
 }
+
 pub fn app(filename: &String, debug: bool) {
     let ledger = process_file(filename, debug);
     let mut writer = csv::WriterBuilder::new().from_writer(io::BufWriter::new(io::stdout()));
